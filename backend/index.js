@@ -1,7 +1,11 @@
+require("dotenv").config();
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
 const app = express();
-app.set(express.json());
+app.use(express.json());
+
+const authRoute = require("./src/modules/auth/auth.router");
 
 app.use(
   cors({
@@ -10,7 +14,13 @@ app.use(
     credentials: true,
   }),
 );
+mongoose
+  .connect(process.env.MONGODB_URL)
+  .then(() => console.log("MongoDB connected successfully"))
+  .catch((err) => console.error("Could not connect to MongoDB", err));
 
+app.use("/auth",authRoute);
+  
 app.get("/", (req, res) => {
   res.send("Welcome to the Weekly Report Team Dashboard Backend");
 });
