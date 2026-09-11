@@ -48,6 +48,34 @@ const registerUser = async (req, res) => {
   };
 };
 
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+
+  const token = generateToken(user);
+
+  return {
+    user: {
+      userID: user.userID,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+    },
+    token,
+  };
+};
+
 module.exports = {
   registerUser,
+  loginUser,
 };
