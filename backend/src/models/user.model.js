@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["TEAM_MEMBER", "MANAGER", "ADMIN"],
+      set: (value) => value.toUpperCase(),
       default: "TEAM_MEMBER",
     },
     isActive: {
