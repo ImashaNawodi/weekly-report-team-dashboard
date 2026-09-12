@@ -11,6 +11,7 @@ const authRoute = require("./src/modules/auth/auth.router");
 const userRoute = require("./src/modules/users/user.routes");
 const projectRoute = require("./src/modules/project/project.route");
 const reportRoute = require("./src/modules/report/report.route");
+const dashboardRoute = require("./src/modules/dashboard/dashbaord.routes");
 const errorHandler = require("./src/middleware/errorHandler.middleware");
 
 app.use(
@@ -29,6 +30,7 @@ app.use("/auth",authRoute);
 app.use("/users",userRoute);
 app.use("/projects", projectRoute);
 app.use("/reports",reportRoute);
+app.use("/dashboard", dashboardRoute);
   
 app.get("/health", (req, res) => {
   res.send("Welcome to the Weekly Report Team Dashboard Backend");
