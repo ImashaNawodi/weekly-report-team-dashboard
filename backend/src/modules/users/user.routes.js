@@ -10,4 +10,5 @@ router.get("/view-profile",authenticate,userController.getUserProfileController)
 router.post("/update-profile",authenticate,validate(updateProfileSchema),userController.updateUserProfileController);
 router.post("/update-role",authenticate,authorize("ADMIN"),validate(updateRoleSchema),userController.updateUserRoleController);
 router.post("/update-status",authenticate,authorize("ADMIN"),validate(updateUserStatusSchema),userController.updateUserStatusController);
+router.get("/all-users",authenticate, authorize("MANAGER", "ADMIN"),userController.getAllUsersController);
 module.exports = router;

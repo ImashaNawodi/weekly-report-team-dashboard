@@ -60,9 +60,23 @@ const updateUserStatusController = async (req, res, next) => {
     next(error);
   }
 };
+
+const getAllUsersController = async (req, res, next) => {
+  try {
+    const users = await userService.getAllUsers(req.query);
+    res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      data: users,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getUserProfileController,
   updateUserProfileController,
   updateUserRoleController,
   updateUserStatusController,
+  getAllUsersController,
 };
