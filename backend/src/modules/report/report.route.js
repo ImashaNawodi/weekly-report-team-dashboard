@@ -3,12 +3,12 @@ const router = express.Router();
 const validate = require("../../middleware/validate.middleware");
 const authenticate = require("../../middleware/authenticate.middleware");
 const authorize = require("../../middleware/authorize.midleware");
-const { createReportSchema, updateReportSchema } = require("./report.validator");
+const { createReportSchema, updateReportSchema,reviewReportSchema} = require("./report.validator");
 const reportController = require("./report.contoller");
 router.post(
   "/create-report",
   authenticate,
-  authorize("TEAM_MEMBER"),
+  //authorize("TEAM_MEMBER"),
   validate(createReportSchema),
   reportController.createReportController,
 );
@@ -37,7 +37,7 @@ router.post(
 router.post(
   "/submit",
   authenticate,
-  authorize("TEAM_MEMBER"),
+  //authorize("TEAM_MEMBER"),
   reportController.submitReportController
 );
 
@@ -47,4 +47,13 @@ router.post(
   authorize("MANAGER", "ADMIN"),
   reportController.approveReportController
 );
+
+router.post(
+  "/request-correction",
+  authenticate,
+  //authorize("MANAGER", "ADMIN"),
+  validate(reviewReportSchema),
+  reportController.requestCorrectionController
+);
+
 module.exports = router;

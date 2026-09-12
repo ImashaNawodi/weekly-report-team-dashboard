@@ -231,6 +231,37 @@ const approveReport = async (reportID, managerID) => {
   return report;
 };
 
+const requestCorrection = async (
+  reportID,
+  managerID,
+  feedback
+) => {
+  const report = await reportModel.findOne(reportID);
+
+  if (!report) {
+    throw new AppError("Report not found", 404);
+  }
+console.log("Report found:", report);
+  if (report.status !== "SUBMITTED") {
+    throw new AppError(
+      "Only submitted reports can be sent for correction",
+      400
+    );
+  }
+
+  report.status = "NEEDS_CORRECTION";
+  report.reviewedBy = managerID;
+  report.reviewedAt = new Date();
+
+  report.managerFeedback =
+    feedback ||
+    "Please review and correct your report.";
+
+  await report.save();
+
+  return report;
+};
+
 module.exports = {
   createReport,
   getMyReports,
@@ -238,4 +269,5 @@ module.exports = {
   updateReport,
   submitReport,
   approveReport,
+  requestCorrection,
 };

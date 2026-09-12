@@ -10,7 +10,7 @@ const generateReportID = async () => {
   }
 
   const lastNumber = parseInt(
-    lastReport.reportID.substring(1),
+    lastReport.reportNumber.substring(1),
     10
   );
 

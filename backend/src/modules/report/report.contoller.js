@@ -79,14 +79,30 @@ const submitReportController = async (req, res, next) => {
 const approveReportController = async (req, res, next) => {
   try {
     const { reportID } = req.body;
-    const result = await reportService.approveReport(
-      reportID,
-      req.user.id,
-    );
+    const result = await reportService.approveReport(reportID, req.user.id);
 
     res.status(200).json({
       success: true,
       message: "Report approved successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const requestCorrectionController = async (req, res, next) => {
+  try {
+    const { reportID,...data } = req.body;
+    const result = await reportService.requestCorrection(
+      reportID,
+      req.user.id,
+      data,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Correction requested successfully",
       data: result,
     });
   } catch (error) {
@@ -101,4 +117,5 @@ module.exports = {
   updateReportController,
   submitReportController,
   approveReportController,
+  requestCorrectionController,
 };
