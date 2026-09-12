@@ -28,7 +28,18 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+
+
+const passwordResetSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .lowercase()
+    .email("Please provide a valid email address"),
+  });
+
 module.exports = {
   registerSchema,
   loginSchema,
+  passwordResetSchema
 };

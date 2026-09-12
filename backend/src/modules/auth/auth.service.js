@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userModel = require("../../models/user.model");
+const { sendResetEmail } = require("../../utils/mailer");
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -61,6 +62,13 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ message: "Invalid credentials" });
   }
 
+  if (!user.isActive) {
+    return res
+      .status(403)
+      .json({
+        message: "Your account is inactive. Please contact an administrator.",
+      });
+  }
   const token = generateToken(user);
 
   return {
@@ -75,7 +83,20 @@ const loginUser = async (req, res) => {
   };
 };
 
+const forgetPassword = async (req, res) => {
+  const { email } = req.body
+
+  const user = await userModel.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  const resetToken = generateToken(user);
+  await sendResetEmail(user.email, resetToken);
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  forgetPassword,
 };

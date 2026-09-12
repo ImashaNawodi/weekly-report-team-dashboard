@@ -30,7 +30,22 @@ const loginController = async (req, res) => {
   }
 };
 
+const forgetPasswordController = async (req, res) => {
+  try {
+    const result = await authService.forgetPassword(req, res);  
+    res.status(200).json({  
+    success: true,
+      message: "Password reset instructions sent to your email",
+      data: result,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: error.message || "Server error" });
+  }
+};
 module.exports = {
   registerController,
   loginController,
+  forgetPasswordController,
 };
