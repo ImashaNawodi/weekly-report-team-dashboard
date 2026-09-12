@@ -1,12 +1,16 @@
+const { setAuthCookie, clearAuthCookie } = require("../../utils/cookie.utils");
 const authService = require("./auth.service");
 
 const registerController = async (req, res) => {
   try {
-    const result = await authService.registerUser(req, res);
+    const result = await authService.registerUser(req.body);
+    setAuthCookie(res, result.token);
     res.status(201).json({
       success: true,
       message: "User registered successfully",
-      data: result,
+      data: {
+        user: result.user,
+      },
     });
   } catch (error) {
     res
@@ -17,11 +21,14 @@ const registerController = async (req, res) => {
 
 const loginController = async (req, res) => {
   try {
-    const result = await authService.loginUser(req, res);
+    const result = await authService.loginUser(req.body);
+    setAuthCookie(res, result.token);
     res.status(200).json({
       success: true,
       message: "User logged in successfully",
-      data: result,
+       data: {
+        user: result.user,
+      },
     });
   } catch (error) {
     res
@@ -32,9 +39,9 @@ const loginController = async (req, res) => {
 
 const forgetPasswordController = async (req, res) => {
   try {
-    const result = await authService.forgetPassword(req, res);  
-    res.status(200).json({  
-    success: true,
+    const result = await authService.forgetPassword(req.body);
+    res.status(200).json({
+      success: true,
       message: "Password reset instructions sent to your email",
       data: result,
     });
@@ -44,8 +51,18 @@ const forgetPasswordController = async (req, res) => {
       .json({ success: false, message: error.message || "Server error" });
   }
 };
+
+const logoutController = (req, res) => {
+  clearAuthCookie(res);
+
+  res.status(200).json({
+    success: true,
+    message: "User logged out successfully",
+  });
+};
 module.exports = {
   registerController,
   loginController,
   forgetPasswordController,
+  logoutController,
 };

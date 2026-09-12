@@ -1,32 +1,20 @@
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const userModel = require("../../models/user.model");
-const { sendResetEmail } = require("../../utils/mailer");
+const { sendResetEmail } = require("../../utils/mailer.utils");
+const { generateToken } = require("../../utils/token.utils");
+const AppError = require("../../utils/appError.utils");
 
-const generateToken = (user) => {
-  return jwt.sign(
-    {
-      id: user.userID,
-      email: user.email,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || "1d",
-    },
-  );
-};
-
-const registerUser = async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+const registerUser = async (data) => {
+  const { firstName, lastName, email, password } = data;
 
   const existingUser = await userModel.findOne({ email });
   if (existingUser) {
-    return res.status(400).json({ message: "User already exists" });
+    throw new AppError("User already exists", 400);
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = new userModel({
+  const user = new userModel({
     firstName,
     lastName,
     email,
@@ -34,40 +22,36 @@ const registerUser = async (req, res) => {
     role: "TEAM_MEMBER",
   });
 
-  await newUser.save();
-  const token = generateToken(newUser);
+  await user.save();
+  const token = generateToken(user);
 
   return {
-    newUser: {
-      userID: newUser.userID,
-      firstName: newUser.firstName,
-      lastName: newUser.lastName,
-      email: newUser.email,
-      role: newUser.role,
+    user: {
+      userID: user.userID,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
     },
     token,
   };
 };
 
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+const loginUser = async (data) => {
+  const { email, password } = data;
 
   const user = await userModel.findOne({ email });
   if (!user) {
-    return res.status(400).json({ message: "Invalid credentials" });
+    throw new AppError("Invalid credentials", 400);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    return res.status(400).json({ message: "Invalid credentials" });
+    throw new AppError("Invalid credentials", 400);
   }
 
   if (!user.isActive) {
-    return res
-      .status(403)
-      .json({
-        message: "Your account is inactive. Please contact an administrator.",
-      });
+    throw new AppError("Your account is inactive. Please contact an administrator.", 403);
   }
   const token = generateToken(user);
 
@@ -83,12 +67,12 @@ const loginUser = async (req, res) => {
   };
 };
 
-const forgetPassword = async (req, res) => {
-  const { email } = req.body
+const forgetPassword = async (data) => {
+  const { email } = data;
 
   const user = await userModel.findOne({ email });
   if (!user) {
-    return res.status(400).json({ message: "User not found" });
+    throw new AppError("User not found", 400);
   }
 
   const resetToken = generateToken(user);
