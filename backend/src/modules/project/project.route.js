@@ -10,9 +10,10 @@ const authorize = require("../../middleware/authorize.midleware");
 router.post(
   "/create",
   authenticate,
-  authorize("ADMIN", "MANAGER"),
+  authorize("ADMIN"),
   validate(createProjectSchema),
   projectController.createProjectController,
 );
-router.get("/get-all-projects", authenticate, projectController.getAllProjectsController);
+router.get("/get-all-projects", authenticate, authorize("ADMIN"), projectController.getAllProjectsController);
+router.post("/update-project", authenticate, authorize("ADMIN","MANAGER"), projectController.updateProjectController);
 module.exports = router;

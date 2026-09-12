@@ -10,7 +10,7 @@ const generateProjectID = async () => {
   }
 
   const lastNumber = parseInt(
-    lastProject.projectID.substring(1)
+    lastProject.projectNumber.substring(1)
   );
 
   const nextNumber = lastNumber + 1;

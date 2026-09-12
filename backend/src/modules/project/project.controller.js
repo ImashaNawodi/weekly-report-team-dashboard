@@ -27,7 +27,27 @@ const getAllProjectsController = async (req, res, next) => {
   }
 };
 
+const updateProjectController = async (req, res, next) => {
+  try {
+     const { projectID, ...data } = req.body;
+
+    const result = await projectService.updateProject(
+      projectID,
+      data
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Project updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createProjectController,
   getAllProjectsController,
+  updateProjectController,
 };

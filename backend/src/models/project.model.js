@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const projectSchema = new mongoose.Schema(
   {
-    projectID: {
+    projectNumber: {
       type: String,
       unique: true,
       required: true,
@@ -24,12 +24,16 @@ const projectSchema = new mongoose.Schema(
       maxlength: 500,
     },
 
-    teamMembers: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    
+    teamMembers: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      required: true,
+    },
 
     isActive: {
       type: Boolean,
@@ -38,7 +42,7 @@ const projectSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Project", projectSchema);
