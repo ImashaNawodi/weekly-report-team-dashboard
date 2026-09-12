@@ -11,8 +11,8 @@ const registerUser = async (data) => {
   if (existingUser) {
     throw new AppError("User already exists", 400);
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const salt = process.env.SALT || 15;
+  const hashedPassword = await bcrypt.hash(password,salt);
 
   const user = new userModel({
     firstName,
