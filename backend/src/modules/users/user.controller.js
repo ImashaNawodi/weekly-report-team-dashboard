@@ -47,8 +47,22 @@ const updateUserRoleController = async (req, res, next) => {
   }
 };
 
+const updateUserStatusController = async (req, res, next) => {
+  try {
+    const { userID, isActive } = req.body;
+    const updatedUser = await userService.updateUserStatus(userID, isActive);
+    res.status(200).json({
+      success: true,
+      message: "User status updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   getUserProfileController,
   updateUserProfileController,
   updateUserRoleController,
+  updateUserStatusController,
 };

@@ -43,14 +43,18 @@ const updateUserRole = async (userID, newRole) => {
   return user;
 };
 
-/* const updateUserStatus = async (userID, isActive) => {
-  const user = await userModel.findById (userID);
+const updateUserStatus = async (userID, isActive) => {
+  const user = await userModel.findById(userID);
   if (!user) {
     throw new AppError("User not found", 404);
   }
- */
+  user.isActive = isActive;
+  await user.save();
+  return user;
+};
 module.exports = {
   getUserProfile,
   updateUserProfile,
   updateUserRole,
+  updateUserStatus,
 };

@@ -23,16 +23,18 @@ const updateProfileSchema = z.object({
 });
 
 const updateRoleSchema = z.object({
-  role: z.string()
+  role: z
+    .string()
     .transform((value) => value.toUpperCase())
     .pipe(
       z.enum(["TEAM_MEMBER", "MANAGER", "ADMIN"], {
         message: "Invalid role",
-      })
+      }),
     ),
 });
 
 const updateUserStatusSchema = z.object({
+  userID: z.string(),
   isActive: z.boolean({
     message: "isActive must be true or false",
   }),
