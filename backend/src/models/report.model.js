@@ -45,7 +45,7 @@ const reportVersionSchema = new mongoose.Schema(
 
 const reportSchema = new mongoose.Schema(
   {
-    reportID: {
+    reportNumber: {
       type: String,
       unique: true,
       required: true,

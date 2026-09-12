@@ -5,14 +5,8 @@ const { generateReportID } = require("../../utils/reportNumber.utills");
 const AppError = require("../../utils/appError.utils");
 
 const createReport = async (userID, data) => {
-  const {
-    project,
-    weekStart,
-    weekEnd,
-    workCompleted,
-    plannedWork,
-    blockers,
-  } = data;
+  const { project, weekStart, weekEnd, workCompleted, plannedWork, blockers } =
+    data;
 
   const user = await userModel.findById(userID);
 
@@ -27,20 +21,14 @@ const createReport = async (userID, data) => {
   }
 
   if (!projectExists.isActive) {
-    throw new AppError(
-      "Cannot create a report for an inactive project",
-      400
-    );
+    throw new AppError("Cannot create a report for an inactive project", 400);
   }
 
   const startDate = new Date(weekStart);
   const endDate = new Date(weekEnd);
 
   if (startDate > endDate) {
-    throw new AppError(
-      "Week start cannot be after week end",
-      400
-    );
+    throw new AppError("Week start cannot be after week end", 400);
   }
 
   const existingReport = await reportModel.findOne({
@@ -52,14 +40,14 @@ const createReport = async (userID, data) => {
   if (existingReport) {
     throw new AppError(
       "A report already exists for this project and week",
-      400
+      400,
     );
   }
 
-  const reportID = await generateReportID();
+  const reportNumber = await generateReportID();
 
   const report = new reportModel({
-    reportID,
+    reportNumber,
     user: userID,
     project,
     weekStart: startDate,
@@ -76,12 +64,7 @@ const createReport = async (userID, data) => {
 };
 
 const getMyReports = async (userID, query) => {
-  const {
-    page = 1,
-    limit = 10,
-    status,
-    project,
-  } = query;
+  const { page = 1, limit = 10, status, project } = query;
 
   const filter = {
     user: userID,
@@ -113,22 +96,14 @@ const getMyReports = async (userID, query) => {
     pagination: {
       totalReports,
       currentPage: pageNumber,
-      totalPages: Math.ceil(
-        totalReports / limitNumber
-      ),
+      totalPages: Math.ceil(totalReports / limitNumber),
       limit: limitNumber,
     },
   };
 };
 
 const getAllReports = async (query) => {
-  const {
-    page = 1,
-    limit = 10,
-    status,
-    project,
-    user,
-  } = query;
+  const { page = 1, limit = 10, status, project, user } = query;
 
   const filter = {};
 
@@ -163,15 +138,46 @@ const getAllReports = async (query) => {
     pagination: {
       totalReports,
       currentPage: pageNumber,
-      totalPages: Math.ceil(
-        totalReports / limitNumber
-      ),
+      totalPages: Math.ceil(totalReports / limitNumber),
       limit: limitNumber,
     },
   };
 };
+
+const updateReport = async (reportID, userID, data) => {
+  // Check later
+  const report = await reportModel.findOne(reportID);
+  console.log("Report found:", report);
+  if (!report) {
+    throw new AppError("Report not found", 404);
+  }
+
+  if (report.user.toString() !== userID) {
+    throw new AppError("You can only update your own report", 403);
+  }
+
+  if (report.status !== "DRAFT" && report.status !== "NEEDS_CORRECTION") {
+    throw new AppError(
+      "Only draft or reports needing correction can be edited",
+      400,
+    );
+  }
+
+  Object.assign(report, data);
+
+  if (report.status === "NEEDS_CORRECTION") {
+    report.status = "DRAFT";
+    report.managerFeedback = "";
+  }
+
+  await report.save();
+
+  return report;
+};
+
 module.exports = {
   createReport,
   getMyReports,
   getAllReports,
+  updateReport,
 };
