@@ -106,8 +106,29 @@ const updateProject = async (projectID, data) => {
   };
 };
 
+const updateProjectStatus = async (projectID, data) => {
+  const project = await projectModel.findById(projectID);
+  if (!project) {
+    throw new AppError("Project not found", 404);
+  }
+
+  project.isActive = data.isActive;
+
+  await project.save();
+
+  return {
+    projectID: project.projectID,
+    name: project.name,
+    description: project.description,
+    numberOfTeamMembers: project.teamMembers.length,
+    isActive: project.isActive,
+    updatedAt: project.updatedAt,
+  };
+};
+
 module.exports = {
   createProject,
   getAllProjects,
   updateProject,
+  updateProjectStatus,
 };

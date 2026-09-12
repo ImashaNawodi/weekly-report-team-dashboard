@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const projectController = require("./project.controller");
 const validate = require("../../middleware/validate.middleware");
-const { createProjectSchema } = require("./project.validator");
+const { createProjectSchema, updateProjectStatusSchema } = require("./project.validator");
 const authenticate = require("../../middleware/authenticate.middleware");
 const authorize = require("../../middleware/authorize.midleware");
 
@@ -11,9 +11,11 @@ router.post(
   "/create",
   authenticate,
   authorize("ADMIN"),
-  validate(createProjectSchema),
+  validate(createProjectSchema,updateProjectStatusSchema),
   projectController.createProjectController,
 );
 router.get("/get-all-projects", authenticate, authorize("ADMIN"), projectController.getAllProjectsController);
-router.post("/update-project", authenticate, authorize("ADMIN","MANAGER"), projectController.updateProjectController);
+router.post("/update-project", authenticate, authorize("ADMIN","MANAGER"),validate(createProjectSchema), projectController.updateProjectController);
+router.post("/update-project-status", authenticate, authorize("ADMIN","MANAGER"),validate(updateProjectStatusSchema), projectController.updateProjectStatusController);
+
 module.exports = router;

@@ -18,6 +18,14 @@ const createProjectSchema = z.object({
     .optional(),
 });
 
+const updateProjectStatusSchema = z.object({
+  projectID: z.string(),
+  isActive: z.boolean({
+    message: "isActive must be true or false",
+  }),
+});
+
 module.exports = {
   createProjectSchema,
+  updateProjectStatusSchema,
 };

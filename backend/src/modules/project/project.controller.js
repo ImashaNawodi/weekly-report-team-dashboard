@@ -29,12 +29,9 @@ const getAllProjectsController = async (req, res, next) => {
 
 const updateProjectController = async (req, res, next) => {
   try {
-     const { projectID, ...data } = req.body;
+    const { projectID, ...data } = req.body;
 
-    const result = await projectService.updateProject(
-      projectID,
-      data
-    );
+    const result = await projectService.updateProject(projectID, data);
 
     res.status(200).json({
       success: true,
@@ -46,8 +43,23 @@ const updateProjectController = async (req, res, next) => {
   }
 };
 
+const updateProjectStatusController = async (req, res, next) => {
+  try {
+    const { projectID, ...data } = req.body;
+    const result = await projectService.updateProjectStatus(projectID, data);
+
+    res.status(200).json({
+      success: true,
+      message: "Project status updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   createProjectController,
   getAllProjectsController,
   updateProjectController,
+  updateProjectStatusController,
 };
