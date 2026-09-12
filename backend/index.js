@@ -8,6 +8,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 const authRoute = require("./src/modules/auth/auth.router");
+const userRoute = require("./src/modules/users/user.routes");
 const errorHandler = require("./src/middleware/errorHandler.middleware");
 
 app.use(
@@ -23,6 +24,7 @@ mongoose
   .catch((err) => console.error("Could not connect to MongoDB", err));
 
 app.use("/auth",authRoute);
+app.use("/users",userRoute);
   
 app.get("/health", (req, res) => {
   res.send("Welcome to the Weekly Report Team Dashboard Backend");
