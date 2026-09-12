@@ -34,4 +34,11 @@ router.post(
   reportController.updateReportController
 );
 
+router.post(
+  "/submit",
+  authenticate,
+  authorize("TEAM_MEMBER"),
+  reportController.submitReportController
+);
+
 module.exports = router;

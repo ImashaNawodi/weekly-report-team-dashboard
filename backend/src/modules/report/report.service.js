@@ -174,10 +174,56 @@ const updateReport = async (reportID, userID, data) => {
 
   return report;
 };
+const submitReport = async (
+  reportID,
+  userID
+) => {
+  const report = await reportModel.findById(reportID);
+
+  if (!report) {
+    throw new AppError("Report not found", 404);
+  }
+
+  if (report.user.toString() !== userID) {
+    throw new AppError(
+      "You can only submit your own report",
+      403
+    );
+  }
+
+  if (report.status !== "DRAFT") {
+    throw new AppError(
+      "Only draft reports can be submitted",
+      400
+    );
+  }
+
+  const versionNumber =
+    report.versions.length + 1;
+
+  report.versions.push({
+    versionNumber,
+    submittedAt: new Date(),
+    submittedBy: userID,
+    workCompleted: report.workCompleted,
+    plannedWork: report.plannedWork,
+    blockers: report.blockers,
+    status: "SUBMITTED",
+  });
+
+  report.status = "SUBMITTED";
+  report.submittedAt = new Date();
+
+  await report.save();
+
+  return report;
+};
+
 
 module.exports = {
   createReport,
   getMyReports,
   getAllReports,
   updateReport,
+  submitReport,
 };

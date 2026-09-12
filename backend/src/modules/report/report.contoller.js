@@ -60,9 +60,28 @@ const updateReportController = async (req, res, next) => {
     next(error);
   }
 };
+
+const submitReportController = async (req, res, next) => {
+  try {
+    const { reportID } = req.body;
+    const result = await reportService.submitReport(
+      reportID,
+      req.user.id
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Report submitted successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   createReportController,
   getMyReportsController,
   getAllReportsController,
   updateReportController,
+  submitReportController,
 };
