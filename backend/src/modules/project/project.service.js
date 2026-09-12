@@ -32,6 +32,25 @@ const createProject = async (data) => {
   };
 };
 
+const getAllProjects = async () => {
+  const projects = await projectModel
+    .find()
+    .populate("teamMembers", "firstName lastName email role")
+    .sort({ createdAt: -1 });
+
+  return projects.map((project) => ({
+    projectID: project.projectID,
+    name: project.name,
+    description: project.description,
+    teamMembers: project.teamMembers,
+    numberOfTeamMembers: project.teamMembers.length,
+    isActive: project.isActive,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  }));
+};
+
 module.exports = {
   createProject,
+  getAllProjects,
 };
