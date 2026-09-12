@@ -75,6 +75,53 @@ const createReport = async (userID, data) => {
   return report;
 };
 
+const getMyReports = async (userID, query) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    project,
+  } = query;
+
+  const filter = {
+    user: userID,
+  };
+
+  if (status) {
+    filter.status = status;
+  }
+
+  if (project) {
+    filter.project = project;
+  }
+
+  const pageNumber = Number(page);
+  const limitNumber = Number(limit);
+  const skip = (pageNumber - 1) * limitNumber;
+
+  const reports = await reportModel
+    .find(filter)
+    .populate("project", "projectID name")
+    .sort({ weekStart: -1 })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const totalReports = await reportModel.countDocuments(filter);
+
+  return {
+    reports,
+    pagination: {
+      totalReports,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(
+        totalReports / limitNumber
+      ),
+      limit: limitNumber,
+    },
+  };
+};
+
 module.exports = {
   createReport,
+  getMyReports,
 };

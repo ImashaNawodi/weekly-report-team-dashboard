@@ -12,5 +12,11 @@ router.post(
   validate(createReportSchema),
   reportController.createReportController
 );
+router.get(
+  "/my-reports",
+  authenticate,
+  authorize("TEAM_MEMBER"),
+  reportController.getMyReportsController
+);
 
 module.exports = router;
