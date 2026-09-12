@@ -14,6 +14,12 @@ const updateProfileSchema = z.object({
     .min(2, "Last name must be at least 2 characters")
     .max(50, "Last name cannot exceed 50 characters")
     .optional(),
+
+  email: z
+    .string()
+    .trim()
+    .lowercase()
+    .email("Please provide a valid email address"),
 });
 
 const updateRoleSchema = z.object({
