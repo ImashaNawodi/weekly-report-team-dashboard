@@ -174,10 +174,8 @@ const updateReport = async (reportID, userID, data) => {
 
   return report;
 };
-const submitReport = async (
-  reportID,
-  userID
-) => {
+
+const submitReport = async (reportID, userID) => {
   const report = await reportModel.findById(reportID);
 
   if (!report) {
@@ -185,21 +183,14 @@ const submitReport = async (
   }
 
   if (report.user.toString() !== userID) {
-    throw new AppError(
-      "You can only submit your own report",
-      403
-    );
+    throw new AppError("You can only submit your own report", 403);
   }
 
   if (report.status !== "DRAFT") {
-    throw new AppError(
-      "Only draft reports can be submitted",
-      400
-    );
+    throw new AppError("Only draft reports can be submitted", 400);
   }
 
-  const versionNumber =
-    report.versions.length + 1;
+  const versionNumber = report.versions.length + 1;
 
   report.versions.push({
     versionNumber,
@@ -219,6 +210,26 @@ const submitReport = async (
   return report;
 };
 
+const approveReport = async (reportID, managerID) => {
+  const report = await reportModel.findById(reportID);
+
+  if (!report) {
+    throw new AppError("Report not found", 404);
+  }
+
+  if (report.status !== "SUBMITTED") {
+    throw new AppError("Only submitted reports can be approved", 400);
+  }
+
+  report.status = "APPROVED";
+  report.reviewedBy = managerID;
+  report.reviewedAt = new Date();
+  report.managerFeedback = "";
+
+  await report.save();
+
+  return report;
+};
 
 module.exports = {
   createReport,
@@ -226,4 +237,5 @@ module.exports = {
   getAllReports,
   updateReport,
   submitReport,
+  approveReport,
 };

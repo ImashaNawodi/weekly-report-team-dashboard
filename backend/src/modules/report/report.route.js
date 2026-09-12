@@ -41,4 +41,10 @@ router.post(
   reportController.submitReportController
 );
 
+router.post(
+  "/approve",
+  authenticate,
+  authorize("MANAGER", "ADMIN"),
+  reportController.approveReportController
+);
 module.exports = router;

@@ -48,7 +48,7 @@ const updateReportController = async (req, res, next) => {
     const result = await reportService.updateReport(
       reportID,
       req.user.id,
-      data
+      data,
     );
 
     res.status(200).json({
@@ -64,10 +64,7 @@ const updateReportController = async (req, res, next) => {
 const submitReportController = async (req, res, next) => {
   try {
     const { reportID } = req.body;
-    const result = await reportService.submitReport(
-      reportID,
-      req.user.id
-    );
+    const result = await reportService.submitReport(reportID, req.user.id);
 
     res.status(200).json({
       success: true,
@@ -78,10 +75,30 @@ const submitReportController = async (req, res, next) => {
     next(error);
   }
 };
+
+const approveReportController = async (req, res, next) => {
+  try {
+    const { reportID } = req.body;
+    const result = await reportService.approveReport(
+      reportID,
+      req.user.id,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Report approved successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createReportController,
   getMyReportsController,
   getAllReportsController,
   updateReportController,
   submitReportController,
+  approveReportController,
 };
