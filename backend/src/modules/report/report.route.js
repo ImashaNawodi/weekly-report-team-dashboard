@@ -10,13 +10,20 @@ router.post(
   authenticate,
   authorize("TEAM_MEMBER"),
   validate(createReportSchema),
-  reportController.createReportController
+  reportController.createReportController,
 );
 router.get(
   "/my-reports",
   authenticate,
   authorize("TEAM_MEMBER"),
-  reportController.getMyReportsController
+  reportController.getMyReportsController,
+);
+
+router.get(
+  "/all-reports",
+  authenticate,
+  authorize("MANAGER", "ADMIN"),
+  reportController.getAllReportsController,
 );
 
 module.exports = router;

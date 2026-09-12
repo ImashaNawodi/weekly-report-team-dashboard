@@ -1,10 +1,7 @@
 const reportService = require("./report.service");
 const createReportController = async (req, res, next) => {
   try {
-    const result = await reportService.createReport(
-      req.user.id,
-      req.body
-    );
+    const result = await reportService.createReport(req.user.id, req.body);
 
     res.status(201).json({
       success: true,
@@ -18,10 +15,7 @@ const createReportController = async (req, res, next) => {
 
 const getMyReportsController = async (req, res, next) => {
   try {
-    const result = await reportService.getMyReports(
-      req.user.id,
-      req.query
-    );
+    const result = await reportService.getMyReports(req.user.id, req.query);
 
     res.status(200).json({
       success: true,
@@ -33,7 +27,21 @@ const getMyReportsController = async (req, res, next) => {
   }
 };
 
+const getAllReportsController = async (req, res, next) => {
+  try {
+    const result = await reportService.getAllReports(req.query);
+
+    res.status(200).json({
+      success: true,
+      message: "Reports retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   createReportController,
   getMyReportsController,
+  getAllReportsController,
 };
