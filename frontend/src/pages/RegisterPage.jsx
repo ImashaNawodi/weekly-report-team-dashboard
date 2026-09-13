@@ -6,36 +6,22 @@ import {
   EyeOff,
   ArrowRight,
   ArrowLeft,
-  CheckCircle2,
-  XCircle,
   User,
-  Briefcase,
   BarChart3,
   Users,
   CalendarCheck,
   ShieldCheck,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
-
-const PROJECTS = [
-  "Product Development",
-  "Engineering Platform",
-  "Customer Success",
-  "Marketing & Growth",
-  "Operations",
-  "Finance & Admin",
-];
-
-const PASSWORD_RULES = [
-  { label: "At least 8 characters", test: (p) => p.length >= 8 },
-  { label: "One uppercase letter (A-Z)", test: (p) => /[A-Z]/.test(p) },
-  { label: "One lowercase letter (a-z)", test: (p) => /[a-z]/.test(p) },
-  { label: "One number (0-9)", test: (p) => /\d/.test(p) },
-  {
-    label: "One special character (!@#$%^&*)",
-    test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p),
-  },
-];
-
+import { Form, Input, Checkbox, Button } from "antd";
+import { useNavigate } from "react-router-dom";
+import { userSignUpService } from "../services/UserService";
+import {
+  PASSWORD_RULES,
+  passwordFieldValidation,
+} from "../helpers/PasswordValidation";
+import { emailFieldValidation } from "../helpers/EmailValidation";
 const features = [
   {
     icon: CalendarCheck,
@@ -56,64 +42,29 @@ const features = [
 ];
 
 export default function RegisterPage({ onNavigateLogin }) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const password = Form.useWatch("password", form);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "",
-    project: "",
-    agreeToTerms: false,
-  });
-
-  const handleChange = (field, value) => {
-    setForm((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const passedRules = PASSWORD_RULES.filter((rule) =>
-    rule.test(form.password),
-  ).length;
-
-  const passwordStrength =
-    passedRules <= 1
-      ? {
-          label: "Very weak",
-          color: "bg-red-500",
-          score: 1,
-        }
-      : passedRules === 2
-        ? {
-            label: "Weak",
-            color: "bg-orange-500",
-            score: 2,
-          }
-        : passedRules === 3
-          ? {
-              label: "Fair",
-              color: "bg-yellow-500",
-              score: 3,
-            }
-          : passedRules === 4
-            ? {
-                label: "Good",
-                color: "bg-blue-500",
-                score: 4,
-              }
-            : {
-                label: "Strong",
-                color: "bg-green-500",
-                score: 5,
-              };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true);
+      const response = await userSignUpService(values);
+      if (response.success) {
+        console.log("Registration successful:", response);
+        navigate("/login");
+      } else {
+        console.error("Registration failed:", response.message);
+      }
+      console.log("Registration values:", values);
+    } catch (error) {
+      console.error("Registration error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -129,11 +80,13 @@ export default function RegisterPage({ onNavigateLogin }) {
         />
 
         <div className="absolute -right-32 top-20 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+
         <div className="absolute -left-20 bottom-10 h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
 
         <div className="absolute right-20 top-1/3">
           <div className="relative h-32 w-32">
             <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-pulse" />
+
             <div className="absolute inset-0 scale-75 rounded-full border-2 border-blue-400/20 animate-pulse" />
 
             <div className="absolute inset-0 flex items-center justify-center">
@@ -184,6 +137,7 @@ export default function RegisterPage({ onNavigateLogin }) {
         <div className="relative z-10 flex items-center gap-8">
           <div>
             <div className="text-2xl font-bold text-white">12k+</div>
+
             <p className="mt-1 text-xs text-slate-400">Teams onboarded</p>
           </div>
 
@@ -191,6 +145,7 @@ export default function RegisterPage({ onNavigateLogin }) {
 
           <div>
             <div className="text-2xl font-bold text-white">98%</div>
+
             <p className="mt-1 text-xs text-slate-400">
               Report submission rate
             </p>
@@ -200,6 +155,7 @@ export default function RegisterPage({ onNavigateLogin }) {
 
           <div>
             <div className="text-2xl font-bold text-white">4.9/5</div>
+
             <p className="mt-1 text-xs text-slate-400">User satisfaction</p>
           </div>
         </div>
@@ -238,206 +194,244 @@ export default function RegisterPage({ onNavigateLogin }) {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+          <Form
+            form={form}
+            layout="vertical"
+            requiredMark={false}
+            onFinish={handleSubmit}
+            className="mt-5"
+          >
             <div className="grid grid-cols-2 gap-4">
+              <Form.Item
+                name="firstName"
+                className="!mb-4"
+                rules={[{ required: true, message: "First name is required!" }]}
+              >
+                <div>
+                  <label
+                    htmlFor="firstName"
+                    className="mb-1.5 block text-sm font-medium text-slate-700"
+                  >
+                    First Name
+                  </label>
+
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                    <Input
+                      id="firstName"
+                      placeholder="Jane"
+                      className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
+                      maxLength={50}
+                      autoComplete="off"
+                    />
+                  </div>
+                </div>
+              </Form.Item>
+
+              <Form.Item
+                name="lastName"
+                className="!mb-4"
+                rules={[{ required: true, message: "Last name is required!" }]}
+              >
+                <div>
+                  <label
+                    htmlFor="lastName"
+                    className="mb-1.5 block text-sm font-medium text-slate-700"
+                  >
+                    Last Name
+                  </label>
+
+                  <Input
+                    id="lastName"
+                    placeholder="Smith"
+                    autoComplete="off"
+                    className="!h-[42px] !rounded-lg !border-slate-300 !px-3 !text-sm"
+                    maxLength={50}
+                  />
+                </div>
+              </Form.Item>
+            </div>
+
+            <Form.Item
+              name="email"
+              className="!mb-4"
+              rules={[
+                {
+                  validator: emailFieldValidation,
+                },
+              ]}
+            >
               <div>
                 <label
-                  htmlFor="firstName"
+                  htmlFor="email"
                   className="mb-1.5 block text-sm font-medium text-slate-700"
                 >
-                  First name
+                  Work Email
                 </label>
 
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-                  <input
-                    id="firstName"
-                    type="text"
-                    placeholder="Jane"
-                    value={form.firstName}
-                    onChange={(e) => handleChange("firstName", e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@company.com"
+                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
                   />
                 </div>
               </div>
+            </Form.Item>
 
+            <Form.Item
+              name="password"
+              className="!mb-4"
+              rules={[
+                {
+                  validator: passwordFieldValidation,
+                },
+              ]}
+            >
               <div>
                 <label
-                  htmlFor="lastName"
+                  htmlFor="password"
                   className="mb-1.5 block text-sm font-medium text-slate-700"
                 >
-                  Last name
+                  Password
                 </label>
 
-                <input
-                  id="lastName"
-                  type="text"
-                  placeholder="Smith"
-                  value={form.lastName}
-                  onChange={(e) => handleChange("lastName", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
-              >
-                Work email
-              </label>
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
+                  />
 
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                <input
-                  id="email"
-                  type="email"
-                  placeholder="you@company.com"
-                  value={form.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
-              >
-                Password
-              </label>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  value={form.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-
-              {form.password && (
-                <div className="mt-2.5">
-                  <div className="flex items-center gap-1.5">
-                    {[1, 2, 3, 4, 5].map((segment) => (
-                      <div
-                        key={segment}
-                        className={`h-1.5 flex-1 rounded-full ${
-                          segment <= passwordStrength.score
-                            ? passwordStrength.color
-                            : "bg-slate-200"
-                        }`}
-                      />
-                    ))}
-
-                    <span className="ml-1 min-w-[60px] text-right text-xs font-medium text-slate-500">
-                      {passwordStrength.label}
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              )}
 
-              <ul className="mt-2.5 space-y-1">
-                {PASSWORD_RULES.map((rule, index) => {
-                  const passed = rule.test(form.password);
+                {password && (
+                  <ul className="mt-2.5 space-y-1">
+                    {PASSWORD_RULES.map((rule, index) => {
+                      const passed = rule.test(password);
 
-                  return (
-                    <li key={index} className="flex items-center gap-1.5">
-                      {passed ? (
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
-                      ) : (
-                        <XCircle className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                      )}
+                      return (
+                        <li key={index} className="flex items-center gap-1.5">
+                          {passed ? (
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                          )}
 
-                      <span
-                        className={`text-xs ${
-                          passed ? "text-green-600" : "text-slate-400"
-                        }`}
-                      >
-                        {rule.label}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="mb-1.5 block text-sm font-medium text-slate-700"
-              >
-                Confirm password
-              </label>
-
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Re-enter your password"
-                  value={form.confirmPassword}
-                  onChange={(e) =>
-                    handleChange("confirmPassword", e.target.value)
-                  }
-                  className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+                          <span
+                            className={`text-xs ${
+                              passed ? "text-green-600" : "text-slate-400"
+                            }`}
+                          >
+                            {rule.label}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
-            </div>
+            </Form.Item>
+            <Form.Item
+              name="confirmPassword"
+              className="!mb-4"
+              dependencies={["password"]}
+              rules={[
+                {
+                  required: true,
+                  message: "Confirm password is required!",
+                },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("password") === value) {
+                      return Promise.resolve();
+                    }
 
-            <div>
+                    return Promise.reject(new Error("Passwords do not match"));
+                  },
+                }),
+              ]}
+            >
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="mb-1.5 block text-sm font-medium text-slate-700"
+                >
+                  Confirm Password
+                </label>
+
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter your password"
+                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </Form.Item>
+
+            <Form.Item
+              name="agreeToTerms"
+              valuePropName="checked"
+              className="!mb-4"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    value
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error(
+                            "You must agree to the Terms of Service and Privacy Policy!",
+                          ),
+                        ),
+                },
+              ]}
+            >
               <label className="flex cursor-pointer items-start gap-2.5">
-                <input
-                  type="checkbox"
-                  checked={form.agreeToTerms}
-                  onChange={(e) =>
-                    handleChange("agreeToTerms", e.target.checked)
-                  }
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-100"
-                />
+                <Checkbox />
 
                 <span className="text-sm text-slate-600">
-                  I agree to the{" "}
+                  I agree to the
                   <a
                     href="#"
                     className="font-medium text-blue-600 hover:underline"
                   >
                     Terms of Service
-                  </a>{" "}
-                  and{" "}
+                  </a>
+                  and
                   <a
                     href="#"
                     className="font-medium text-blue-600 hover:underline"
@@ -447,19 +441,24 @@ export default function RegisterPage({ onNavigateLogin }) {
                   .
                 </span>
               </label>
-            </div>
+            </Form.Item>
 
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 focus:ring-offset-1 active:scale-[0.99]"
-            >
-              Create Account
-              <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </form>
+            <Form.Item className="!mb-0">
+              <Button
+                htmlType="submit"
+                loading={loading}
+                className="!flex !h-auto !w-full !items-center !justify-center !gap-2 !rounded-lg !border-0 !bg-blue-600 !px-4 !py-2.5 !text-sm !font-semibold !text-white !shadow-sm hover:!bg-blue-700"
+                disabled={loading}
+              >
+                {loading ? "Creating..." : " Create Account"}
+
+                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+              </Button>
+            </Form.Item>
+          </Form>
 
           <p className="mt-5 text-center text-sm text-slate-500">
-            Already have an account?{" "}
+            Already have an account?
             <button
               type="button"
               onClick={onNavigateLogin}
