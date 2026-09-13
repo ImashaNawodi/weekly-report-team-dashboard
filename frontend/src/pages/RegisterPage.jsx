@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Mail,
   Lock,
@@ -197,7 +197,7 @@ export default function RegisterPage({ onNavigateLogin }) {
           <Form
             form={form}
             layout="vertical"
-            requiredMark={false}
+            requiredMark={true}
             onFinish={handleSubmit}
             className="mt-5"
           >
@@ -461,7 +461,7 @@ export default function RegisterPage({ onNavigateLogin }) {
             Already have an account?
             <button
               type="button"
-              onClick={onNavigateLogin}
+            onClick={() => navigate("/login")}
               className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
             >
               Sign in
