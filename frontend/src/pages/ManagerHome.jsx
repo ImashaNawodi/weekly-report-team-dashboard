@@ -1,16 +1,27 @@
+import { useState } from "react";
+import { Outlet } from "react-router-dom";
+
 import Header from "../components/Header";
 import Sidebar from "../components/SideBar";
-import ProjectsDashboard from "./ProjectDashboard";
-
 
 function ManagerHome() {
+  const [header, setHeader] = useState({
+    title: "Dashboard",
+    subtitle: "Manage your team and projects",
+  });
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header title="Projects" subtitle="Manage your team's projects easily and efficiently" />
-        <main className="flex-1 overflow-y-auto">
-          <ProjectsDashboard />
+      <Sidebar setHeader={setHeader} />
+
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <Header
+          title={header.title}
+          subtitle={header.subtitle}
+        />
+
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <Outlet />
         </main>
       </div>
     </div>
