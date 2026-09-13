@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Form, Input, Checkbox, Button } from "antd";
 import { useNavigate } from "react-router-dom";
-import { userSignUpService } from "../services/UserService";
+import { userSignUpService } from "../services/AuthService";
 import {
   PASSWORD_RULES,
   passwordFieldValidation,

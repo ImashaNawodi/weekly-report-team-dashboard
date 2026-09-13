@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { X, Check } from "lucide-react";
-
 import {
   Modal,
   Form,
@@ -13,7 +12,11 @@ import {
   Col,
   message,
 } from "antd";
-import { createProjectService } from "../services/ProjectService";
+import {
+  createProjectService,
+  updateProjectService,
+} from "../services/ProjectService";
+import getInitials from "../helpers/ProfileName";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -21,45 +24,30 @@ const { TextArea } = Input;
 export default function ProjectModal({
   open,
   onClose,
+  onSuccess,
   teamMembers = [],
   editingProject,
 }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
-  const getInitials = (firstName = "", lastName = "") => {
-    const first = firstName.trim();
-    const last = lastName.trim();
-
-    if (first && last) {
-      return `${first[0]}${last[0]}`.toUpperCase();
-    }
-
-    if (first) {
-      return first.slice(0, 2).toUpperCase();
-    }
-
-    if (last) {
-      return last.slice(0, 2).toUpperCase();
-    }
-
-    return "?";
-  };
-
   useEffect(() => {
-    if (editingProject && open) {
+    if (!open) return;
+
+    if (editingProject) {
       form.setFieldsValue({
-        name: editingProject.name,
-        description: editingProject.description,
+        name: editingProject.name || "",
+        description: editingProject.description || "",
         team_member_ids:
           editingProject.teamMembers?.map((member) =>
             typeof member === "string" ? member : member._id,
           ) || [],
       });
-    } else if (!editingProject && open) {
+    } else {
       form.resetFields();
-
       form.setFieldsValue({
+        name: "",
+        description: "",
         team_member_ids: [],
       });
     }
@@ -69,13 +57,22 @@ export default function ProjectModal({
     setLoading(true);
 
     try {
-      const input = {
-        name: values.name.trim(),
-        description: values.description.trim(),
+      const projectData = {
+        name: values.name?.trim() || "",
+        description: values.description?.trim() || "",
         teamMembers: values.team_member_ids || [],
       };
 
-      const response = await createProjectService(input);
+      let response;
+
+      if (editingProject) {
+        response = await updateProjectService(
+          editingProject.projectID,
+          projectData,
+        );
+      } else {
+        response = await createProjectService(projectData);
+      }
 
       if (response.success) {
         message.success(
@@ -84,14 +81,24 @@ export default function ProjectModal({
             : "Project created successfully",
         );
 
+        onSuccess?.(response.data);
+
         form.resetFields();
         onClose();
       } else {
-        message.error(response.message || "Failed to create project");
+        message.error(
+          response.message ||
+            (editingProject
+              ? "Failed to update project"
+              : "Failed to create project"),
+        );
       }
     } catch (error) {
       message.error(
-        error.message || "Something went wrong while creating the project",
+        error.message ||
+          (editingProject
+            ? "Something went wrong while updating the project"
+            : "Something went wrong while creating the project"),
       );
     } finally {
       setLoading(false);
@@ -125,28 +132,16 @@ export default function ProjectModal({
         },
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "16px 24px",
-          borderBottom: "1px solid #e2e8f0",
-        }}
-      >
+      <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
         <div>
           <Typography.Title
             level={5}
-            style={{
-              margin: 0,
-              color: "#0f172a",
-              fontWeight: 700,
-            }}
+            className="!m-0 !font-bold !text-slate-900"
           >
             {editingProject ? "Edit Project" : "Add New Project"}
           </Typography.Title>
 
-          <Text type="secondary" style={{ fontSize: 14 }}>
+          <Text type="secondary" className="!text-sm">
             {editingProject
               ? "Update project details and team assignments"
               : "Create a new project and assign team members"}
@@ -157,16 +152,7 @@ export default function ProjectModal({
           type="text"
           onClick={handleClose}
           icon={<X size={20} />}
-          style={{
-            width: 36,
-            height: 36,
-            minWidth: 36,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#94a3b8",
-            borderRadius: 8,
-          }}
+          className="flex !h-9 !w-9 !min-w-9 items-center justify-center !rounded-lg !text-slate-400"
         />
       </div>
 
@@ -177,11 +163,7 @@ export default function ProjectModal({
         initialValues={{
           team_member_ids: [],
         }}
-        style={{
-          maxHeight: "calc(90vh - 82px)",
-          overflowY: "auto",
-          padding: "20px 24px",
-        }}
+        className="max-h-[calc(90vh-82px)] overflow-y-auto px-6 py-5"
       >
         <Form.Item
           label="Project Name"
@@ -208,15 +190,13 @@ export default function ProjectModal({
             {
               required: true,
               message: "Project description is required",
-            }
+            },
           ]}
         >
           <TextArea
             rows={3}
             placeholder="Brief description of the project scope and goals..."
-            style={{
-              resize: "none",
-            }}
+            className="resize-none"
             maxLength={500}
           />
         </Form.Item>
@@ -263,31 +243,15 @@ export default function ProjectModal({
             }
 
             return (
-              <div style={{ marginBottom: 24 }}>
-                <Text
-                  type="secondary"
-                  style={{
-                    display: "block",
-                    marginBottom: 10,
-                  }}
-                >
+              <div className="mb-6">
+                <Text type="secondary" className="mb-2.5 !block">
                   Selected Team Members
                 </Text>
 
                 <Row gutter={[8, 8]}>
                   {selectedTeamMembers.map((member) => (
                     <Col xs={24} sm={12} key={member._id}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          padding: "10px 12px",
-                          border: "1px solid #bfdbfe",
-                          background: "#eff6ff",
-                          borderRadius: 8,
-                        }}
-                      >
+                      <div className="flex items-center gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5">
                         <Avatar
                           size={32}
                           style={{
@@ -300,18 +264,10 @@ export default function ProjectModal({
                           {getInitials(member.firstName, member.lastName)}
                         </Avatar>
 
-                        <div
-                          style={{
-                            flex: 1,
-                            minWidth: 0,
-                          }}
-                        >
+                        <div className="min-w-0 flex-1">
                           <Text
                             ellipsis
-                            style={{
-                              display: "block",
-                              fontWeight: 600,
-                            }}
+                            className="!block !font-semibold !text-slate-800"
                           >
                             {member.firstName} {member.lastName}
                           </Text>
@@ -319,16 +275,13 @@ export default function ProjectModal({
                           <Text
                             type="secondary"
                             ellipsis
-                            style={{
-                              display: "block",
-                              fontSize: 12,
-                            }}
+                            className="!block !text-xs"
                           >
                             {member.role || "Team Member"}
                           </Text>
                         </div>
 
-                        <Check size={16} color="#2563eb" />
+                        <Check size={16} className="text-blue-600" />
                       </div>
                     </Col>
                   ))}
@@ -338,23 +291,12 @@ export default function ProjectModal({
           }}
         </Form.Item>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 12,
-            paddingTop: 20,
-            borderTop: "1px solid #f1f5f9",
-          }}
-        >
+        <div className="flex justify-end gap-3 border-t border-slate-100 pt-5">
           <Button
             onClick={handleClose}
             size="large"
             disabled={loading}
-            style={{
-              borderRadius: 8,
-              fontWeight: 500,
-            }}
+            className="!rounded-lg !font-medium"
           >
             Cancel
           </Button>
@@ -364,10 +306,7 @@ export default function ProjectModal({
             htmlType="submit"
             loading={loading}
             size="large"
-            style={{
-              borderRadius: 8,
-              fontWeight: 600,
-            }}
+            className="!rounded-lg !font-semibold"
           >
             {editingProject ? "Save Changes" : "Create Project"}
           </Button>

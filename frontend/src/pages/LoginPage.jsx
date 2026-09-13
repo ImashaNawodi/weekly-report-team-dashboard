@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Form, Input, Button, Checkbox, Alert, Typography } from "antd";
 import WorkPulseLogo from "../components/WorkPlusLogo";
-import { userSignInService } from "../services/UserService";
+import { userSignInService } from "../services/AuthService";
 import { emailFieldValidation } from "../helpers/EmailValidation";
 import { useNavigate } from "react-router-dom";
 
