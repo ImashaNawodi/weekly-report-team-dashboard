@@ -34,7 +34,7 @@ const updateRoleSchema = z.object({
 });
 
 const updateUserStatusSchema = z.object({
-  userID: z.string(),
+  userAccountID: z.string(),
   isActive: z.boolean({
     message: "isActive must be true or false",
   }),

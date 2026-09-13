@@ -43,8 +43,8 @@ const updateUserRole = async (userID, newRole) => {
   return user;
 };
 
-const updateUserStatus = async (userID, isActive) => {
-  const user = await userModel.findById(userID);
+const updateUserStatus = async (userAccountID, isActive) => {
+  const user = await userModel.findById(userAccountID);
   if (!user) {
     throw new AppError("User not found", 404);
   }

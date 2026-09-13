@@ -4,6 +4,7 @@ import RegisterPage from "../pages/RegisterPage";
 import ManagerHome from "../pages/ManagerHome";
 import DashboardPage from "../pages/DashbaordPage";
 import ProjectDashboard from "../pages/ProjectDashboard";
+import TeamDashboard from "../pages/TeamDashbaord";
 
 const AppRoutes = () => {
   return (
@@ -14,6 +15,7 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="projects" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectDashboard />} />
+        <Route path="team" element={<TeamDashboard />} />
       </Route>
     </Routes>
   );

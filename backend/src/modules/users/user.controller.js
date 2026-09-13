@@ -1,5 +1,18 @@
 const userService = require("./user.service");
 
+const createUserController = async (req, res, next) => {
+  try {
+    const user = await userService.createUser(req.body);
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 const getUserProfileController = async (req, res, next) => {
   try {
     const userID = req.user.id;
@@ -49,8 +62,8 @@ const updateUserRoleController = async (req, res, next) => {
 
 const updateUserStatusController = async (req, res, next) => {
   try {
-    const { userID, isActive } = req.body;
-    const updatedUser = await userService.updateUserStatus(userID, isActive);
+    const { userAccountID, isActive } = req.body;
+    const updatedUser = await userService.updateUserStatus(userAccountID, isActive);
     res.status(200).json({
       success: true,
       message: "User status updated successfully",
