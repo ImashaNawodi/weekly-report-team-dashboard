@@ -25,7 +25,7 @@ import ProjectModal from "../components/ProjectModal";
 import ProjectDetailDrawer from "../components/ProjectDetailDrawer";
 import AvatarGroup from "../components/Avatar";
 import StatusBadge from "../components/StatusBadge";
-import { getAllUsersService } from "../services/UserService";
+import { getAllUsersService } from "../services/TeamService";
 import {
   getAllProjectsService,
   updateProjectStatusService,
