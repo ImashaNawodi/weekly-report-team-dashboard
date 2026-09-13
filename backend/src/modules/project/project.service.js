@@ -40,7 +40,7 @@ const getAllProjects = async () => {
     .populate("teamMembers", "firstName lastName email role")
     .sort({ createdAt: -1 });
 
-  return projects.map((project) => ({
+    return projects.map((project) => ({
     projectNumber: project.projectNumber,
     projectID: project._id,
     name: project.name,
@@ -54,7 +54,12 @@ const getAllProjects = async () => {
 };
 
 const updateProject = async (projectID, data) => {
+  console.log("Project ID:", projectID);
+  console.log("Update data:", data);
+
   const project = await projectModel.findById(projectID);
+
+  console.log("Project before update:", project);
 
   if (!project) {
     throw new AppError("Project not found", 404);
@@ -89,9 +94,16 @@ const updateProject = async (projectID, data) => {
     project.teamMembers = data.teamMembers;
   }
 
+  console.log("Project before save:", project);
+
   await project.save();
 
-  await project.populate("teamMembers", "firstName lastName email role");
+  console.log("Project after save:", project);
+
+  await project.populate(
+    "teamMembers",
+    "firstName lastName email role"
+  );
 
   return {
     projectNumber: project.projectNumber,

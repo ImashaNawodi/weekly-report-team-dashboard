@@ -10,12 +10,8 @@ const createProjectSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(500, "Description cannot exceed 500 characters")
-    .optional(),
-
-  teamMembers: z
-    .array(z.string())
-    .optional(),
+    .max(500, "Description cannot exceed 500 characters"),
+  teamMembers: z.array(z.string()).optional(),
 });
 
 const updateProjectStatusSchema = z.object({
@@ -25,7 +21,25 @@ const updateProjectStatusSchema = z.object({
   }),
 });
 
+const updateProjectSchema = z.object({
+  projectID: z.string(),
+
+  name: z
+    .string()
+    .trim()
+    .min(2, "Project name must be at least 2 characters")
+    .max(100, "Project name cannot exceed 100 characters")
+    .optional(),
+
+  description: z
+    .string()
+    .trim()
+    .max(500, "Description cannot exceed 500 characters"),
+  teamMembers: z.array(z.string()),
+});
+
 module.exports = {
   createProjectSchema,
   updateProjectStatusSchema,
+  updateProjectSchema,
 };

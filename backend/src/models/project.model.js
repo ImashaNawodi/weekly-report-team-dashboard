@@ -22,6 +22,7 @@ const projectSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 500,
+      required: true,
     },
 
     
