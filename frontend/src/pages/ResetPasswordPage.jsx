@@ -20,6 +20,7 @@ import {
   passwordFieldValidation,
 } from "../helpers/PasswordValidation";
 import { resetPasswordService } from "../services/AuthService";
+import { notification } from "antd";
 
 const features = [
   {
@@ -97,9 +98,10 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
     }
 
     if (!token) {
-      setAuthError(
-        "This password reset link is invalid or has expired. Please request a new one.",
-      );
+      notification.error({
+        message: "This password reset link is invalid or has expired.",
+        placement: "bottomRight",
+      });
       hasError = true;
     }
 
@@ -114,20 +116,28 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
       });
 
       if (!response.success) {
-        setAuthError(
-          response.message ||
+        notification.error({
+          message:
+            response.message ||
             "Unable to update your password. The reset link may have expired.",
-        );
+          placement: "bottomRight",
+        });
         return;
       }
+
+      notification.success({
+        message: "Password reset successfully.",
+        placement: "bottomRight",
+      });
 
       setSuccess(true);
     } catch (error) {
       console.error("RESET PASSWORD ERROR:", error);
 
-      setAuthError(
-        "Something went wrong. Please try again or request a new reset link.",
-      );
+      notification.error({
+        message: "Something went wrong. Please try again.",
+        placement: "bottomRight",
+      });
     } finally {
       setLoading(false);
     }
@@ -157,10 +167,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
           <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-400" />
 
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
-            <CheckCircle2
-              className="h-8 w-8 text-green-600"
-              strokeWidth={2}
-            />
+            <CheckCircle2 className="h-8 w-8 text-green-600" strokeWidth={2} />
           </div>
 
           <h2 className="text-xl font-bold text-slate-900">
@@ -177,10 +184,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all hover:from-blue-700 hover:to-indigo-700 hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-200"
           >
             Continue to Sign In
-            <ArrowRight
-              className="h-4 w-4"
-              strokeWidth={2.5}
-            />
+            <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -219,10 +223,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
         </div>
 
         <div className="relative z-10">
-          <WorkPulseLogo
-            variant="light"
-            iconSize={28}
-          />
+          <WorkPulseLogo variant="light" iconSize={28} />
         </div>
 
         <div className="relative z-10 max-w-md">
@@ -242,20 +243,12 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
               const Icon = feature.icon;
 
               return (
-                <div
-                  key={index}
-                  className="flex items-center gap-3"
-                >
+                <div key={index} className="flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                    <Icon
-                      className="h-5 w-5 text-blue-400"
-                      strokeWidth={2}
-                    />
+                    <Icon className="h-5 w-5 text-blue-400" strokeWidth={2} />
                   </div>
 
-                  <span className="text-sm text-slate-200">
-                    {feature.text}
-                  </span>
+                  <span className="text-sm text-slate-200">{feature.text}</span>
                 </div>
               );
             })}
@@ -264,21 +257,15 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
 
         <div className="relative z-10 flex items-center gap-8">
           <div>
-            <div className="text-2xl font-bold text-white">
-              12k+
-            </div>
+            <div className="text-2xl font-bold text-white">12k+</div>
 
-            <p className="mt-1 text-xs text-slate-400">
-              Teams onboarded
-            </p>
+            <p className="mt-1 text-xs text-slate-400">Teams onboarded</p>
           </div>
 
           <div className="h-10 w-px bg-white/10" />
 
           <div>
-            <div className="text-2xl font-bold text-white">
-              98%
-            </div>
+            <div className="text-2xl font-bold text-white">98%</div>
 
             <p className="mt-1 text-xs text-slate-400">
               Report submission rate
@@ -288,13 +275,9 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
           <div className="h-10 w-px bg-white/10" />
 
           <div>
-            <div className="text-2xl font-bold text-white">
-              4.9/5
-            </div>
+            <div className="text-2xl font-bold text-white">4.9/5</div>
 
-            <p className="mt-1 text-xs text-slate-400">
-              User satisfaction
-            </p>
+            <p className="mt-1 text-xs text-slate-400">User satisfaction</p>
           </div>
         </div>
       </div>
@@ -309,10 +292,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
             onClick={handleNavigateLogin}
             className="mb-6 flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
           >
-            <ArrowLeft
-              className="h-4 w-4"
-              strokeWidth={2}
-            />
+            <ArrowLeft className="h-4 w-4" strokeWidth={2} />
             Back to sign in
           </button>
 
@@ -333,17 +313,11 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
                 strokeWidth={2}
               />
 
-              <p className="text-sm text-red-700">
-                {authError}
-              </p>
+              <p className="text-sm text-red-700">{authError}</p>
             </div>
           )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="mt-5 space-y-4"
-            noValidate
-          >
+          <form onSubmit={handleSubmit} className="mt-5 space-y-4" noValidate>
             <div>
               <label
                 htmlFor="password"
@@ -355,9 +329,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
               <div className="relative">
                 <Lock
                   className={`absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
-                    passwordError
-                      ? "text-red-400"
-                      : "text-slate-400"
+                    passwordError ? "text-red-400" : "text-slate-400"
                   }`}
                 />
 
@@ -388,9 +360,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword((prev) => !prev)
-                  }
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showPassword ? (
@@ -407,10 +377,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
                     const passed = rule.test(password);
 
                     return (
-                      <li
-                        key={rule.key}
-                        className="flex items-center gap-1.5"
-                      >
+                      <li key={rule.key} className="flex items-center gap-1.5">
                         {passed ? (
                           <CheckCircle2
                             className="h-3.5 w-3.5 shrink-0 text-green-500"
@@ -425,9 +392,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
 
                         <span
                           className={`text-xs ${
-                            passed
-                              ? "text-green-600"
-                              : "text-slate-400"
+                            passed ? "text-green-600" : "text-slate-400"
                           }`}
                         >
                           {rule.label}
@@ -439,9 +404,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
               )}
 
               {passwordError && (
-                <p className="mt-1.5 text-xs text-red-600">
-                  {passwordError}
-                </p>
+                <p className="mt-1.5 text-xs text-red-600">{passwordError}</p>
               )}
             </div>
 
@@ -456,19 +419,13 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
               <div className="relative">
                 <Lock
                   className={`absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${
-                    confirmError
-                      ? "text-red-400"
-                      : "text-slate-400"
+                    confirmError ? "text-red-400" : "text-slate-400"
                   }`}
                 />
 
                 <input
                   id="confirmPassword"
-                  type={
-                    showConfirmPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showConfirmPassword ? "text" : "password"}
                   autoComplete="new-password"
                   placeholder="Re-enter your password"
                   value={confirmPassword}
@@ -486,20 +443,15 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
                   className={`w-full rounded-lg border bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:outline-none focus:ring-2 ${
                     confirmError
                       ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-                      : confirmPassword &&
-                        confirmPassword === password
-                      ? "border-green-400 focus:border-green-500 focus:ring-green-100"
-                      : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
+                      : confirmPassword && confirmPassword === password
+                        ? "border-green-400 focus:border-green-500 focus:ring-green-100"
+                        : "border-slate-300 focus:border-blue-500 focus:ring-blue-100"
                   }`}
                 />
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowConfirmPassword(
-                      (prev) => !prev,
-                    )
-                  }
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
                   className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   {showConfirmPassword ? (
@@ -511,9 +463,7 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
               </div>
 
               {confirmError && (
-                <p className="mt-1.5 text-xs text-red-600">
-                  {confirmError}
-                </p>
+                <p className="mt-1.5 text-xs text-red-600">{confirmError}</p>
               )}
             </div>
 
@@ -545,16 +495,12 @@ export default function ResetPasswordPage({ onNavigateLogin }) {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-
                   Updating...
                 </>
               ) : (
                 <>
                   Update Password
-                  <ArrowRight
-                    className="h-4 w-4"
-                    strokeWidth={2.5}
-                  />
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </>
               )}
             </button>

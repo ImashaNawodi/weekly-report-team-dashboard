@@ -27,6 +27,7 @@ import {
   Tag,
   Tooltip,
   message,
+  notification,
 } from "antd";
 
 import {
@@ -130,61 +131,68 @@ const ManagerDashboard = () => {
     setViewReport(null);
   };
 
-  const handleApproveReport = async (report) => {
-    try {
-      const response = await approveReportService(report._id);
 
-      if (!response.success) {
-        throw new Error(
-          response.message || "Failed to approve report",
-        );
-      }
+const handleApproveReport = async (report) => {
+  try {
+    const response = await approveReportService(report._id);
 
-      message.success(
-        response.message || "Report approved successfully",
+    if (!response.success) {
+      throw new Error(
+        response.message || "Failed to approve report",
       );
-
-      await fetchReports();
-    } catch (error) {
-      message.error(
-        error?.message || "Failed to approve report",
-      );
-
-      throw error;
     }
-  };
 
-  const handleRequestCorrection = async (
-    report,
-    managerFeedback,
-  ) => {
-    try {
-      const response = await requestCorrectionService(
-        report._id,
-        managerFeedback,
+    notification.success({
+      message: response.message || "Report approved successfully",
+      placement: "bottomRight",
+    });
+
+    await fetchReports();
+  } catch (error) {
+    notification.error({
+      message: error?.message || "Failed to approve report",
+      placement: "bottomRight",
+    });
+
+    throw error;
+  }
+};
+
+const handleRequestCorrection = async (
+  report,
+  managerFeedback,
+) => {
+  try {
+    const response = await requestCorrectionService(
+      report._id,
+      managerFeedback,
+    );
+
+    if (!response.success) {
+      throw new Error(
+        response.message || "Failed to request correction",
       );
+    }
 
-      if (!response.success) {
-        throw new Error(
-          response.message || "Failed to request correction",
-        );
-      }
-
-      message.success(
+    notification.success({
+      message:
         response.message ||
-          "Report sent back for correction",
-      );
+        "Report sent back for correction",
+      placement: "bottomRight",
+    });
 
-      await fetchReports();
-    } catch (error) {
-      message.error(
+    await fetchReports();
+  } catch (error) {
+    notification.error({
+      message:
         error?.message ||
-          "Failed to request correction",
-      );
+        "Failed to request correction",
+      placement: "bottomRight",
+    });
 
-      throw error;
-    }
-  };
+    throw error;
+  }
+};
 
   const getReportMember = (report) => {
     return (

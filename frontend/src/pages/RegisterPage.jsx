@@ -14,13 +14,14 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { Form, Input, Checkbox, Button } from "antd";
+import { Form, Input, Checkbox, Button, notification } from "antd";
 import { useNavigate } from "react-router-dom";
 import { userSignUpService } from "../services/AuthService";
 import {
   PASSWORD_RULES,
   passwordFieldValidation,
 } from "../helpers/PasswordValidation";
+import WorkPulseLogo from "../components/WorkPlusLogo";
 import { emailFieldValidation } from "../helpers/EmailValidation";
 const features = [
   {
@@ -52,16 +53,33 @@ export default function RegisterPage({ onNavigateLogin }) {
   const handleSubmit = async (values) => {
     try {
       setLoading(true);
+
       const response = await userSignUpService(values);
+
       if (response.success) {
-        console.log("Registration successful:", response);
-        navigate("/login");
+        notification.success({
+          message: "Registration Successful",
+          description: "Your account has been created successfully.",
+          placement: "bottomRight",
+        });
+
+        navigate("/manager-home/dashboard");
       } else {
-        console.error("Registration failed:", response.message);
+        notification.error({
+          message: "Registration Failed",
+          description: response.message || "Unable to create your account.",
+          placement: "bottomRight",
+        });
       }
-      console.log("Registration values:", values);
     } catch (error) {
       console.error("Registration error:", error);
+
+      notification.error({
+        message: "Registration Error",
+        description:
+          error?.message || "Something went wrong. Please try again.",
+        placement: "bottomRight",
+      });
     } finally {
       setLoading(false);
     }
@@ -95,15 +113,9 @@ export default function RegisterPage({ onNavigateLogin }) {
           </div>
         </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500">
-              <BarChart3 className="h-6 w-6 text-white" />
-            </div>
-
-            <span className="text-xl font-bold text-white">WorkPulse</span>
-          </div>
-        </div>
+         <div className="relative z-10">
+                 <WorkPulseLogo variant="light" iconSize={28} />
+               </div>
 
         <div className="relative z-10 max-w-md">
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
@@ -161,316 +173,317 @@ export default function RegisterPage({ onNavigateLogin }) {
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-center px-6 py-10 lg:w-1/2 lg:px-12">
-        <div className="w-full max-w-md">
-          <div className="mb-6 flex justify-center lg:hidden">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600">
-                <BarChart3 className="h-5 w-5 text-white" />
+      <div className="flex w-full items-center justify-center px-6 py-2 lg:w-1/2 lg:px-12">
+        <div className="w-full max-w-md ">
+          <div className="relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-7 shadow-[0_20px_50px_rgba(37,99,235,0.10)] transition-all duration-300 hover:border-blue-200 hover:shadow-[0_25px_60px_rgba(37,99,235,0.15)]">
+            <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-cyan-400" />
+
+            <div className="absolute -right-16 -top-16 h-32 w-32 rounded-full bg-blue-100/50 blur-3xl" />
+
+            <div className="absolute -bottom-20 -left-16 h-32 w-32 rounded-full bg-indigo-100/40 blur-3xl" />
+
+            <div className="relative z-10">
+              <div className="mb-4 flex justify-center lg:hidden">
+                <WorkPulseLogo iconSize={28} />
               </div>
 
-              <span className="text-xl font-bold text-slate-900">
-                WorkPulse
-              </span>
-            </div>
-          </div>
+              <div>
+                <h2 className="text-center text-2xl font-bold tracking-tight text-blue-700">
+                  Create Your Account
+                </h2>
+                <p className="text-center text-sm leading-relaxed text-slate-500">
+                  Get started with WorkPulse in just a few steps.
+                </p>
+              </div>
 
-          <button
-            type="button"
-            onClick={onNavigateLogin}
-            className="mb-6 flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to sign in
-          </button>
-
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              Create your account
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Get started with WorkPulse in just a few steps.
-            </p>
-          </div>
-
-          <Form
-            form={form}
-            layout="vertical"
-            requiredMark={true}
-            onFinish={handleSubmit}
-            className="mt-5"
-          >
-            <div className="grid grid-cols-2 gap-4">
-              <Form.Item
-                name="firstName"
-                className="!mb-4"
-                rules={[{ required: true, message: "First name is required!" }]}
+              <Form
+                form={form}
+                layout="vertical"
+                requiredMark={true}
+                onFinish={handleSubmit}
+                className="mt-2"
               >
-                <div>
-                  <label
-                    htmlFor="firstName"
-                    className="mb-1.5 block text-sm font-medium text-slate-700"
+                <div className="grid grid-cols-2 gap-4">
+                  <Form.Item
+                    name="firstName"
+                    className="!mb-4"
+                    rules={[
+                      { required: true, message: "First name is required!" },
+                    ]}
                   >
-                    First Name
-                  </label>
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="mb-1.5 block text-sm font-medium text-slate-700"
+                      >
+                        First Name
+                      </label>
 
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
 
-                    <Input
-                      id="firstName"
-                      placeholder="Jane"
-                      className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
-                      maxLength={50}
-                      autoComplete="off"
-                    />
+                        <Input
+                          id="firstName"
+                          placeholder="Jane"
+                          className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
+                          maxLength={50}
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="lastName"
+                    className="!mb-4"
+                    rules={[
+                      { required: true, message: "Last name is required!" },
+                    ]}
+                  >
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="mb-1.5 block text-sm font-medium text-slate-700"
+                      >
+                        Last Name
+                      </label>
+
+                      <Input
+                        id="lastName"
+                        placeholder="Smith"
+                        autoComplete="off"
+                        className="!h-[42px] !rounded-lg !border-slate-300 !px-3 !text-sm"
+                        maxLength={50}
+                      />
+                    </div>
+                  </Form.Item>
+                </div>
+
+                <Form.Item
+                  name="email"
+                  className="!mb-4"
+                  rules={[
+                    {
+                      validator: emailFieldValidation,
+                    },
+                  ]}
+                >
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Work Email
+                    </label>
+
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@company.com"
+                        className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
-              </Form.Item>
+                </Form.Item>
 
-              <Form.Item
-                name="lastName"
-                className="!mb-4"
-                rules={[{ required: true, message: "Last name is required!" }]}
-              >
-                <div>
-                  <label
-                    htmlFor="lastName"
-                    className="mb-1.5 block text-sm font-medium text-slate-700"
-                  >
-                    Last Name
+                <Form.Item
+                  name="password"
+                  className="!mb-4"
+                  rules={[
+                    {
+                      validator: passwordFieldValidation,
+                    },
+                  ]}
+                >
+                  <div>
+                    <label
+                      htmlFor="password"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Password
+                    </label>
+
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Create a password"
+                        className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+
+                    {password && (
+                      <ul className="mt-2.5 space-y-1">
+                        {PASSWORD_RULES.map((rule, index) => {
+                          const passed = rule.test(password);
+
+                          return (
+                            <li
+                              key={index}
+                              className="flex items-center gap-1.5"
+                            >
+                              {passed ? (
+                                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
+                              ) : (
+                                <XCircle className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                              )}
+
+                              <span
+                                className={`text-xs ${
+                                  passed ? "text-green-600" : "text-slate-400"
+                                }`}
+                              >
+                                {rule.label}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                </Form.Item>
+                <Form.Item
+                  name="confirmPassword"
+                  className="!mb-4"
+                  dependencies={["password"]}
+                  rules={[
+                    {
+                      required: true,
+                      message: "Confirm password is required!",
+                    },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || getFieldValue("password") === value) {
+                          return Promise.resolve();
+                        }
+
+                        return Promise.reject(
+                          new Error("Passwords do not match"),
+                        );
+                      },
+                    }),
+                  ]}
+                >
+                  <div>
+                    <label
+                      htmlFor="confirmPassword"
+                      className="mb-1.5 block text-sm font-medium text-slate-700"
+                    >
+                      Confirm Password
+                    </label>
+
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="Re-enter your password"
+                        className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </Form.Item>
+
+                <Form.Item
+                  name="agreeToTerms"
+                  valuePropName="checked"
+                  className="!mb-4"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        value
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              new Error(
+                                "You must agree to the Terms of Service and Privacy Policy!",
+                              ),
+                            ),
+                    },
+                  ]}
+                >
+                  <label className="flex cursor-pointer items-start gap-2.5">
+                    <Checkbox />
+
+                    <span className="text-sm text-slate-600">
+                      I agree to the
+                      <a
+                        href="#"
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        Terms of Service
+                      </a>
+                      and
+                      <a
+                        href="#"
+                        className="font-medium text-blue-600 hover:underline"
+                      >
+                        Privacy Policy
+                      </a>
+                      .
+                    </span>
                   </label>
+                </Form.Item>
 
-                  <Input
-                    id="lastName"
-                    placeholder="Smith"
-                    autoComplete="off"
-                    className="!h-[42px] !rounded-lg !border-slate-300 !px-3 !text-sm"
-                    maxLength={50}
-                  />
-                </div>
-              </Form.Item>
+                <Form.Item className="!mb-0">
+                  <Button
+                    htmlType="submit"
+                    loading={loading}
+                    className="!flex !h-auto !w-full !items-center !justify-center !gap-2 !rounded-lg !border-0 !bg-blue-600 !px-4 !py-2.5 !text-sm !font-semibold !text-white !shadow-sm hover:!bg-blue-700"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating..." : " Create Account"}
+
+                    <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                  </Button>
+                </Form.Item>
+              </Form>
+
+              <p className="mt-5 text-center text-sm text-slate-500">
+                Already have an account?
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+                >
+                  Sign in
+                </button>
+              </p>
+
+              <p className="mt-4 text-center text-xs text-slate-400">
+                © 2026 WorkPulse. All rights reserved.
+              </p>
             </div>
-
-            <Form.Item
-              name="email"
-              className="!mb-4"
-              rules={[
-                {
-                  validator: emailFieldValidation,
-                },
-              ]}
-            >
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Work Email
-                </label>
-
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@company.com"
-                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !text-sm"
-                  />
-                </div>
-              </div>
-            </Form.Item>
-
-            <Form.Item
-              name="password"
-              className="!mb-4"
-              rules={[
-                {
-                  validator: passwordFieldValidation,
-                },
-              ]}
-            >
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Password
-                </label>
-
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
-                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-
-                {password && (
-                  <ul className="mt-2.5 space-y-1">
-                    {PASSWORD_RULES.map((rule, index) => {
-                      const passed = rule.test(password);
-
-                      return (
-                        <li key={index} className="flex items-center gap-1.5">
-                          {passed ? (
-                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-500" />
-                          ) : (
-                            <XCircle className="h-3.5 w-3.5 shrink-0 text-slate-300" />
-                          )}
-
-                          <span
-                            className={`text-xs ${
-                              passed ? "text-green-600" : "text-slate-400"
-                            }`}
-                          >
-                            {rule.label}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              className="!mb-4"
-              dependencies={["password"]}
-              rules={[
-                {
-                  required: true,
-                  message: "Confirm password is required!",
-                },
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("password") === value) {
-                      return Promise.resolve();
-                    }
-
-                    return Promise.reject(new Error("Passwords do not match"));
-                  },
-                }),
-              ]}
-            >
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="mb-1.5 block text-sm font-medium text-slate-700"
-                >
-                  Confirm Password
-                </label>
-
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="Re-enter your password"
-                    className="!h-[42px] !rounded-lg !border-slate-300 !pl-10 !pr-10 !text-sm"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((prev) => !prev)}
-                    className="absolute right-3 top-1/2 z-10 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            </Form.Item>
-
-            <Form.Item
-              name="agreeToTerms"
-              valuePropName="checked"
-              className="!mb-4"
-              rules={[
-                {
-                  validator: (_, value) =>
-                    value
-                      ? Promise.resolve()
-                      : Promise.reject(
-                          new Error(
-                            "You must agree to the Terms of Service and Privacy Policy!",
-                          ),
-                        ),
-                },
-              ]}
-            >
-              <label className="flex cursor-pointer items-start gap-2.5">
-                <Checkbox />
-
-                <span className="text-sm text-slate-600">
-                  I agree to the
-                  <a
-                    href="#"
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    Terms of Service
-                  </a>
-                  and
-                  <a
-                    href="#"
-                    className="font-medium text-blue-600 hover:underline"
-                  >
-                    Privacy Policy
-                  </a>
-                  .
-                </span>
-              </label>
-            </Form.Item>
-
-            <Form.Item className="!mb-0">
-              <Button
-                htmlType="submit"
-                loading={loading}
-                className="!flex !h-auto !w-full !items-center !justify-center !gap-2 !rounded-lg !border-0 !bg-blue-600 !px-4 !py-2.5 !text-sm !font-semibold !text-white !shadow-sm hover:!bg-blue-700"
-                disabled={loading}
-              >
-                {loading ? "Creating..." : " Create Account"}
-
-                <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
-              </Button>
-            </Form.Item>
-          </Form>
-
-          <p className="mt-5 text-center text-sm text-slate-500">
-            Already have an account?
-            <button
-              type="button"
-            onClick={() => navigate("/login")}
-              className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline"
-            >
-              Sign in
-            </button>
-          </p>
-
-          <p className="mt-8 text-center text-xs text-slate-400">
-            © 2026 WorkPulse. All rights reserved.
-          </p>
+          </div>
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
   DatePicker,
   Form,
   Input,
+  notification,
   Spin,
   Typography,
 } from "antd";
@@ -66,42 +67,54 @@ export default function CreateReport() {
   };
 
   const handleSubmit = async (values) => {
-    try {
-      setSubmitting(true);
-      setError(null);
+  try {
+    setSubmitting(true);
+    setError(null);
 
-      if (!project?.projectID) {
-        throw new Error("Project not found");
-      }
-
-      const payload = {
-        project: project.projectID,
-
-        weekStart: values.weekStart.startOf("day").toISOString(),
-
-        weekEnd: values.weekEnd.endOf("day").toISOString(),
-
-        workCompleted: values.workCompleted,
-        plannedWork: values.plannedWork,
-        blockers: values.blockers || "",
-      };
-
-      const response = await createReportService(payload);
-
-      if (!response.success) {
-        throw new Error(response.message || "Failed to create report");
-      }
-
-      form.resetFields();
-
-      navigate("/manager-home/reports");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create report");
-    } finally {
-      setSubmitting(false);
+    if (!project?.projectID) {
+      throw new Error("Project not found");
     }
-  };
 
+    const payload = {
+      project: project.projectID,
+
+      weekStart: values.weekStart.startOf("day").toISOString(),
+
+      weekEnd: values.weekEnd.endOf("day").toISOString(),
+
+      workCompleted: values.workCompleted,
+      plannedWork: values.plannedWork,
+      blockers: values.blockers || "",
+    };
+
+    const response = await createReportService(payload);
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to create report");
+    }
+
+    notification.success({
+      message: response.message || "Report created successfully",
+      placement: "bottomRight",
+    });
+
+    form.resetFields();
+
+    navigate("/manager-home/reports");
+  } catch (err) {
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to create report";
+
+    setError(errorMessage);
+
+    notification.error({
+      message: errorMessage,
+      placement: "bottomRight",
+    });
+  } finally {
+    setSubmitting(false);
+  }
+};
   const disabledEndDate = (current) => {
     const weekStart = form.getFieldValue("weekStart");
 

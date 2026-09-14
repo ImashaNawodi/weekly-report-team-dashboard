@@ -28,6 +28,7 @@ import {
   Avatar,
   Progress,
   Tooltip,
+  notification
 } from "antd";
 
 import {
@@ -176,18 +177,30 @@ export default function TeamDashboard() {
   };
 
   const updateUserStatus = async (userAccountID, isActive) => {
-    try {
-      const response = await updateUserStatusService(userAccountID, isActive);
+  try {
+    const response = await updateUserStatusService(userAccountID, isActive);
 
-      if (!response.success) {
-        throw new Error(response.message || "Failed to update user status");
-      }
-
-      return response;
-    } catch (error) {
-      throw new Error(error.message || "Failed to update user status");
+    if (!response.success) {
+      notification.error({
+        message: response.message || "Failed to update user status",
+        placement: "bottomRight",
+      });
+      return;
     }
-  };
+
+    notification.success({
+      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
+      placement: "bottomRight",
+    });
+
+    return response;
+  } catch (error) {
+    notification.error({
+      message: error.message || "Failed to update user status",
+      placement: "bottomRight",
+    });
+  }
+};
 
   const handleToggleStatus = async (member) => {
     setTogglingId(member._id);

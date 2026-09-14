@@ -17,6 +17,7 @@ import {
   Spin,
   Typography,
   message,
+  notification,
 } from "antd";
 import { AuthContext } from "../context/AuthContext";
 import { updateUserProfileService } from "../services/TeamService";
@@ -48,31 +49,38 @@ export default function SettingsPage() {
     }
   }, [user, authLoading, form]);
 
-  const handleSave = async (values) => {
-    try {
-      setSaving(true);
+const handleSave = async (values) => {
+  try {
+    setSaving(true);
 
-      const response = await updateUserProfileService({
-        firstName: values.firstName.trim(),
-        lastName: values.lastName.trim(),
-        email: values.email.trim(),
-      });
+    const response = await updateUserProfileService({
+      firstName: values.firstName.trim(),
+      lastName: values.lastName.trim(),
+      email: values.email.trim(),
+    });
 
-      if (!response.success) {
-        throw new Error(response.message || "Failed to update settings");
-      }
-
-      setUser(response.user);
-      setLastUpdated(new Date());
-
-      message.success("Settings saved successfully");
-    } catch (error) {
-      console.error("UPDATE PROFILE ERROR:", error);
-      message.error(error.message || "Could not save your settings");
-    } finally {
-      setSaving(false);
+    if (!response.success) {
+      throw new Error(response.message || "Failed to update settings");
     }
-  };
+
+    setUser(response.user);
+    setLastUpdated(new Date());
+
+    notification.success({
+      message: "Settings saved successfully",
+      placement: "bottomRight",
+    });
+  } catch (error) {
+    console.error("UPDATE PROFILE ERROR:", error);
+
+    notification.error({
+      message: error.message || "Could not save your settings",
+      placement: "bottomRight",
+    });
+  } finally {
+    setSaving(false);
+  }
+};
   if (loading || authLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">

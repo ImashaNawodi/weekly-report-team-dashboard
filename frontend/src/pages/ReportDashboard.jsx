@@ -28,6 +28,7 @@ import {
   Table,
   Tag,
   Tooltip,
+  notification,
 } from "antd";
 
 import {
@@ -113,9 +114,19 @@ export default function ReportDashboard() {
         throw new Error(response.message || "Failed to submit report");
       }
 
+      notification.success({
+        message: "Report submitted successfully",
+        placement: "bottomRight",
+      });
+
       await fetchReports();
     } catch (error) {
-      throw error;
+      console.error("SUBMIT REPORT ERROR:", error);
+
+      notification.error({
+        message: error.message || "Failed to submit report",
+        placement: "bottomRight",
+      });
     }
   };
 
