@@ -32,9 +32,10 @@ const updateUserProfile = async (userID, data) => {
   return user;
 };
 
-const updateUserRole = async (userID, newRole) => {
+const updateUserRole = async (userAccountID, newRole) => {
   const { role } = newRole;
-  const user = await userModel.findById(userID);
+  console.log("Updating user role for userAccountID:", userAccountID, "to role:", role);
+  const user = await userModel.findById(userAccountID);
   if (!user) {
     throw new AppError("User not found", 404);
   }

@@ -32,14 +32,14 @@ export default function TeamMemberRow({
       },
     },
 
-    /* {
+    {
       key: "edit",
-      label: "Edit",
+      label: "Assign Role",
       icon: <EditOutlined />,
       onClick: () => {
         onEdit(member);
       },
-    }, */
+    }, 
 
     {
       key: "status",

@@ -24,8 +24,8 @@ router.post(
 router.post(
   "/update-role",
   authenticate,
-  authorize("ADMIN"),
-  validate(updateRoleSchema),
+  //authorize("ADMIN"),
+  //validate(updateRoleSchema),
   userController.updateUserRoleController,
 );
 router.post(

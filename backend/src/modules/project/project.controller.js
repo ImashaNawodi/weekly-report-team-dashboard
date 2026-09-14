@@ -57,9 +57,24 @@ const updateProjectStatusController = async (req, res, next) => {
     next(error);
   }
 };
+
+const getUserProjectsController = async (req, res, next) => {
+  try {
+    const result = await projectService.getUserProjects(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: "User projects retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   createProjectController,
   getAllProjectsController,
   updateProjectController,
   updateProjectStatusController,
+  getUserProjectsController,
 };

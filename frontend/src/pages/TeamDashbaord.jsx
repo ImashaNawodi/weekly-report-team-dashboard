@@ -12,6 +12,7 @@ import {
 } from "@ant-design/icons";
 
 import getInitials from "../helpers/ProfileName";
+import TeamMemberModal from "../components/TeamMemberModal";
 
 import {
   Input,
@@ -24,7 +25,6 @@ import {
   Row,
   Col,
   Dropdown,
-  message,
   Avatar,
   Progress,
   Tooltip,
@@ -45,34 +45,34 @@ const PAGE_SIZE = 8;
 export default function TeamDashboard() {
   const [members, setMembers] = useState([]);
   const [projects, setProjects] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-
   const [viewMember, setViewMember] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
 
   useEffect(() => {
     fetchAllUsers();
-    handViewAllProjects();
+    handleViewAllProjects();
   }, []);
 
   const fetchAllUsers = async () => {
     try {
+      setError(null);
+
       const response = await getAllUsersService();
 
       if (!response.success) {
         throw new Error(response.message || "Failed to fetch users");
       }
 
-      const availableMembers = response.data.users.filter(
+      const availableMembers = (response.data?.users || []).filter(
         (user) => user.role !== "ADMIN",
       );
 
@@ -82,7 +82,7 @@ export default function TeamDashboard() {
     }
   };
 
-  const handViewAllProjects = async () => {
+  const handleViewAllProjects = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -107,7 +107,10 @@ export default function TeamDashboard() {
 
   const membersWithProjects = members.map((member) => {
     const userProjects = projects.filter((project) =>
-      project.teamMembers?.some((teamMember) => teamMember._id === member._id),
+      project.teamMembers?.some(
+        (teamMember) =>
+          teamMember?._id === member._id || teamMember === member._id,
+      ),
     );
 
     return {
@@ -168,7 +171,8 @@ export default function TeamDashboard() {
   };
 
   const handleEdit = (member) => {
-    console.log("Edit member:", member);
+    setEditingMember(member);
+    setModalOpen(true);
   };
 
   const updateUserStatus = async (userAccountID, isActive) => {
@@ -207,6 +211,11 @@ export default function TeamDashboard() {
     setSearchQuery("");
     setStatusFilter("all");
     setProjectFilter("all");
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    setEditingMember(null);
   };
 
   const statusItems = [
@@ -293,7 +302,9 @@ export default function TeamDashboard() {
       dataIndex: "role",
       key: "role",
       width: 150,
-      render: (role) => <span className="text-sm text-slate-600">{role}</span>,
+      render: (role) => (
+        <span className="text-sm text-slate-600">{role || "—"}</span>
+      ),
     },
 
     {
@@ -452,11 +463,12 @@ export default function TeamDashboard() {
           </Card>
         </Col>
       </Row>
+
       <Card
         title={
           <div className="flex items-center gap-2">
             <TeamOutlined />
-            <span>Team Members</span>
+            <span>Team Members - this is for admin</span>
           </div>
         }
         className="rounded-xl border-slate-200 shadow-sm"
@@ -535,7 +547,7 @@ export default function TeamDashboard() {
               danger
               onClick={() => {
                 fetchAllUsers();
-                handViewAllProjects();
+                handleViewAllProjects();
               }}
             >
               Retry
@@ -561,14 +573,6 @@ export default function TeamDashboard() {
                 <span className="text-slate-500">No team members yet</span>
               }
             />
-
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              className="rounded-lg"
-            >
-              Add Team Member
-            </Button>
           </div>
         ) : filteredMembers.length === 0 ? (
           <div className="flex min-h-[350px] flex-col items-center justify-center">
@@ -604,6 +608,13 @@ export default function TeamDashboard() {
           />
         )}
       </Card>
+
+      <TeamMemberModal
+        open={modalOpen}
+        onClose={handleModalClose}
+        editingMember={editingMember}
+        onSaved={fetchAllUsers}
+      />
 
       <TeamMemberDetailDrawer
         member={viewMember}

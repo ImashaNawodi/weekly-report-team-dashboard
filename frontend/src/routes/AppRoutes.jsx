@@ -5,6 +5,8 @@ import ManagerHome from "../pages/ManagerHome";
 import DashboardPage from "../pages/DashbaordPage";
 import ProjectDashboard from "../pages/ProjectDashboard";
 import TeamDashboard from "../pages/TeamDashbaord";
+import ReportDashboard from "../pages/ReportDashboard";
+import ManagerDashboard from "../pages/ManagerDashboard";
 
 const AppRoutes = () => {
   return (
@@ -16,6 +18,10 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectDashboard />} />
         <Route path="team" element={<TeamDashboard />} />
+        <Route path="reports" element={<ReportDashboard />} />
+        <Route path="managerDashboard" element={<ManagerDashboard />} />
+
+
       </Route>
     </Routes>
   );

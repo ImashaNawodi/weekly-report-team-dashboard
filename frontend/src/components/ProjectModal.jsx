@@ -25,42 +25,64 @@ export default function ProjectModal({
   open,
   onClose,
   onSuccess,
-  teamMembers = [],
+  members = [],
   editingProject,
 }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
     if (editingProject) {
+      const existingMemberIds = (editingProject.teamMembers || [])
+        .map((member) => {
+          const memberId =
+            typeof member === "string"
+              ? member
+              : member?._id || member?.id || member?.userID;
+
+          return memberId;
+        })
+        .filter(Boolean);
+
+      ("Available Members with IDs:",
+        members.map((member) => ({
+          _id: member._id,
+          id: member.id,
+          userID: member.userID,
+          firstName: member.firstName,
+          lastName: member.lastName,
+        })));
+
       form.setFieldsValue({
         name: editingProject.name || "",
         description: editingProject.description || "",
-        team_member_ids:
-          editingProject.teamMembers?.map((member) =>
-            typeof member === "string" ? member : member._id,
-          ) || [],
+        team_member_ids: existingMemberIds,
       });
     } else {
       form.resetFields();
+
       form.setFieldsValue({
         name: "",
         description: "",
         team_member_ids: [],
       });
     }
-  }, [editingProject, open, form]);
+  }, [editingProject, open, form, members]);
 
   const handleFinish = async (values) => {
     setLoading(true);
 
     try {
+      const selectedMemberIds = values.team_member_ids || [];
+
       const projectData = {
         name: values.name?.trim() || "",
         description: values.description?.trim() || "",
-        teamMembers: values.team_member_ids || [],
+        teamMembers: selectedMemberIds,
       };
 
       let response;
@@ -74,26 +96,32 @@ export default function ProjectModal({
         response = await createProjectService(projectData);
       }
 
-      if (response.success) {
-        message.success(
-          editingProject
-            ? "Project updated successfully"
-            : "Project created successfully",
-        );
-
-        onSuccess?.(response.data);
-
-        form.resetFields();
-        onClose();
-      } else {
+      if (!response.success) {
         message.error(
           response.message ||
             (editingProject
               ? "Failed to update project"
               : "Failed to create project"),
         );
+        return;
       }
+
+      message.success(
+        editingProject
+          ? "Project updated successfully"
+          : "Project created successfully",
+      );
+
+      const updatedProject =
+        response.data?.project || response.project || response.data;
+
+      onSuccess?.(updatedProject);
+
+      form.resetFields();
+      onClose();
     } catch (error) {
+      console.error("Project create/update error:", error);
+
       message.error(
         error.message ||
           (editingProject
@@ -106,6 +134,10 @@ export default function ProjectModal({
   };
 
   const handleClose = () => {
+    if (loading) {
+      return;
+    }
+
     form.resetFields();
     onClose();
   };
@@ -118,8 +150,8 @@ export default function ProjectModal({
       width={672}
       footer={null}
       closable={false}
-      maskClosable
-      keyboard
+      maskClosable={!loading}
+      keyboard={!loading}
       styles={{
         content: {
           padding: 0,
@@ -151,6 +183,7 @@ export default function ProjectModal({
         <Button
           type="text"
           onClick={handleClose}
+          disabled={loading}
           icon={<X size={20} />}
           className="flex !h-9 !w-9 !min-w-9 items-center justify-center !rounded-lg !text-slate-400"
         />
@@ -216,7 +249,7 @@ export default function ProjectModal({
             placeholder="Select team members"
             size="large"
             optionFilterProp="label"
-            options={teamMembers.map((member) => ({
+            options={members.map((member) => ({
               value: member._id,
               label: `${member.firstName ?? ""} ${
                 member.lastName ?? ""
@@ -227,14 +260,14 @@ export default function ProjectModal({
 
         <Form.Item
           noStyle
-          shouldUpdate={(prevValues, currentValues) =>
-            prevValues.team_member_ids !== currentValues.team_member_ids
+          shouldUpdate={(previousValues, currentValues) =>
+            previousValues.team_member_ids !== currentValues.team_member_ids
           }
         >
           {({ getFieldValue }) => {
             const selectedIds = getFieldValue("team_member_ids") || [];
 
-            const selectedTeamMembers = teamMembers.filter((member) =>
+            const selectedTeamMembers = members.filter((member) =>
               selectedIds.includes(member._id),
             );
 

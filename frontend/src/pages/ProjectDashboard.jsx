@@ -1,12 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  Search,
-  AlertCircle,
-  FolderOpen,
-  ChevronDown,
-  X,
-} from "lucide-react";
+import { Plus, Search, FolderOpen, ChevronDown, X } from "lucide-react";
 import {
   Card,
   Row,
@@ -25,7 +18,7 @@ import ProjectModal from "../components/ProjectModal";
 import ProjectDetailDrawer from "../components/ProjectDetailDrawer";
 import AvatarGroup from "../components/Avatar";
 import StatusBadge from "../components/StatusBadge";
-import { getAllUsersService } from "../services/TeamService";
+import { useMembers } from "../context/MembersContext.jsx";
 import {
   getAllProjectsService,
   updateProjectStatusService,
@@ -35,7 +28,6 @@ const { Text, Title, Paragraph } = Typography;
 
 export default function ProjectsDashboard() {
   const [projects, setProjects] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,32 +37,19 @@ export default function ProjectsDashboard() {
   const [viewProject, setViewProject] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
-
+  const { members } = useMembers();
+  
   useEffect(() => {
-    fetchAllUsers();
     handViewAllProjects();
   }, []);
-
-  const fetchAllUsers = async () => {
-    try {
-      const response = await getAllUsersService();
-      if (!response.success) {
-        throw new Error(response.message || "Failed to fetch users");
-      }
-      const availableMembers = response.users.users.filter(
-        (user) => user.role !== "ADMIN",
-      );
-      setTeamMembers(availableMembers);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch users");
-    }
-  };
 
   const handViewAllProjects = async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await getAllProjectsService();
+
       if (!response.success) {
         throw new Error(response.message || "Failed to fetch projects");
       }
@@ -86,31 +65,54 @@ export default function ProjectsDashboard() {
     if (!updatedProject?.projectID) {
       return;
     }
-    setProjects((prevProjects) =>
-      prevProjects.map((project) =>
-        project?.projectID === updatedProject.projectID
-          ? updatedProject
-          : project,
-      ),
-    );
-    setViewProject((prevProject) =>
-      prevProject?.projectID === updatedProject.projectID
-        ? updatedProject
-        : prevProject,
-    );
-    setEditingProject(null);
-  };
 
+    const projectWithMembers = {
+      ...updatedProject,
+      teamMembers: (updatedProject.teamMembers || []).map((memberId) => {
+        const member = members.find(
+          (item) =>
+            String(item?._id) === String(memberId) ||
+            String(item?.id) === String(memberId) ||
+            String(item?.userID) === String(memberId),
+        );
+
+        return member || memberId;
+      }),
+    };
+
+    setProjects((prevProjects) => {
+      const exists = prevProjects.some(
+        (project) =>
+          String(project?.projectID) === String(projectWithMembers.projectID),
+      );
+
+      if (exists) {
+        return prevProjects.map((project) =>
+          String(project?.projectID) === String(projectWithMembers.projectID)
+            ? projectWithMembers
+            : project,
+        );
+      }
+
+      return [projectWithMembers, ...prevProjects];
+    });
+
+    setEditingProject(null);
+    setModalOpen(false);
+  };
   const filteredProjects = projects.filter((project) => {
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase().trim();
+
     const matchesSearch =
       !query ||
       project.name?.toLowerCase().includes(query) ||
       (project.description ?? "").toLowerCase().includes(query);
+
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && project.isActive === true) ||
       (statusFilter === "inactive" && project.isActive === false);
+
     return matchesSearch && matchesStatus;
   });
 
@@ -140,9 +142,11 @@ export default function ProjectsDashboard() {
       const response = await updateProjectStatusService(projectID, {
         isActive,
       });
+
       if (!response.success) {
         throw new Error(response.message || "Failed to update project status");
       }
+
       return response;
     } catch (error) {
       throw new Error(error.message || "Failed to update project status");
@@ -152,10 +156,12 @@ export default function ProjectsDashboard() {
   const handleToggleStatus = async (project) => {
     setTogglingId(project.projectID);
     setError(null);
+
     const newStatus = !project.isActive;
 
     try {
       await updateProjectStatus(project.projectID, newStatus);
+
       await handViewAllProjects();
     } catch (err) {
       setError(
@@ -258,7 +264,32 @@ export default function ProjectsDashboard() {
       ),
     },
   ];
+  const currentEditingProjectId = editingProject?.projectID;
 
+  const assignedMemberIds = new Set(
+    projects
+      .filter(
+        (project) =>
+          String(project.projectID) !== String(currentEditingProjectId),
+      )
+      .flatMap((project) =>
+        (project.teamMembers ?? []).map((member) => {
+          if (typeof member === "string") {
+            return String(member);
+          }
+
+          return String(member?._id || member?.id);
+        }),
+      )
+      .filter(Boolean),
+  );
+
+  const availableMembers = members.filter((member) => {
+    const memberId = String(member?._id || member?.id);
+
+    return memberId && !assignedMemberIds.has(memberId);
+  });
+ 
   return (
     <div className="min-h-full">
       <div className="px-4 py-4 sm:px-6 sm:py-5">
@@ -348,7 +379,7 @@ export default function ProjectsDashboard() {
             <div className="flex min-h-[300px] items-center justify-center sm:min-h-[400px]">
               <Spin size="large" />
             </div>
-          ) :  projects.length === 0 ? (
+          ) : projects.length === 0 ? (
             <div className="px-4 py-8 sm:py-12">
               <Empty
                 image={<FolderOpen size={48} className="text-slate-400" />}
@@ -423,8 +454,8 @@ export default function ProjectsDashboard() {
           setEditingProject(null);
         }}
         onSuccess={handleProjectSuccess}
-        teamMembers={teamMembers}
         editingProject={editingProject}
+        members={availableMembers}
       />
 
       <ProjectDetailDrawer

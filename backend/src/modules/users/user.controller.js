@@ -47,9 +47,9 @@ const updateUserProfileController = async (req, res, next) => {
 
 const updateUserRoleController = async (req, res, next) => {
   try {
-    const userID = req.user.id;
+    const userAccountID = req.body.userAccountID;
     const role = req.body.role;
-    const updatedUser = await userService.updateUserRole(userID, { role });
+    const updatedUser = await userService.updateUserRole(userAccountID, { role });
     res.status(200).json({
       success: true,
       message: "User role updated successfully",

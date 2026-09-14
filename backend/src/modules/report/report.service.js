@@ -5,8 +5,15 @@ const { generateReportID } = require("../../utils/reportNumber.utills");
 const AppError = require("../../utils/appError.utils");
 
 const createReport = async (userID, data) => {
-  const { project, weekStart, weekEnd, workCompleted, plannedWork, blockers } =
-    data;
+  const {
+    project,
+    weekNumber,
+    weekStart,
+    weekEnd,
+    workCompleted,
+    plannedWork,
+    blockers,
+  } = data;
 
   const user = await userModel.findById(userID);
 
@@ -21,11 +28,22 @@ const createReport = async (userID, data) => {
   }
 
   if (!projectExists.isActive) {
-    throw new AppError("Cannot create a report for an inactive project", 400);
+    throw new AppError(
+      "Cannot create a report for an inactive project",
+      400,
+    );
+  }
+
+  if (!weekNumber || weekNumber < 1) {
+    throw new AppError("Invalid week number", 400);
   }
 
   const startDate = new Date(weekStart);
   const endDate = new Date(weekEnd);
+
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    throw new AppError("Invalid week dates", 400);
+  }
 
   if (startDate > endDate) {
     throw new AppError("Week start cannot be after week end", 400);
@@ -34,7 +52,7 @@ const createReport = async (userID, data) => {
   const existingReport = await reportModel.findOne({
     user: userID,
     project,
-    weekStart: startDate,
+    weekNumber,
   });
 
   if (existingReport) {
@@ -50,6 +68,7 @@ const createReport = async (userID, data) => {
     reportNumber,
     user: userID,
     project,
+    weekNumber,
     weekStart: startDate,
     weekEnd: endDate,
     workCompleted,
@@ -145,26 +164,50 @@ const getAllReports = async (query) => {
 };
 
 const updateReport = async (reportID, userID, data) => {
-  // Check later
-  const report = await reportModel.findOne(reportID);
+  const report = await reportModel.findById(reportID);
+
   console.log("Report found:", report);
+
   if (!report) {
     throw new AppError("Report not found", 404);
   }
 
-  if (report.user.toString() !== userID) {
-    throw new AppError("You can only update your own report", 403);
-  }
-
-  if (report.status !== "DRAFT" && report.status !== "NEEDS_CORRECTION") {
+  // Make sure the logged-in user owns this report
+  if (report.user.toString() !== userID.toString()) {
     throw new AppError(
-      "Only draft or reports needing correction can be edited",
-      400,
+      "You can only update your own report",
+      403
     );
   }
 
-  Object.assign(report, data);
+  // Only DRAFT and NEEDS_CORRECTION reports can be edited
+  if (
+    report.status !== "DRAFT" &&
+    report.status !== "NEEDS_CORRECTION"
+  ) {
+    throw new AppError(
+      "Only draft or reports needing correction can be edited",
+      400
+    );
+  }
 
+  const {
+    weekStart,
+    weekEnd,
+    workCompleted,
+    plannedWork,
+    blockers,
+  } = data;
+
+  // Update only editable fields
+  report.weekStart = weekStart;
+  report.weekEnd = weekEnd;
+  report.workCompleted = workCompleted;
+  report.plannedWork = plannedWork;
+  report.blockers = blockers || "";
+
+  // If manager sent it back for correction,
+  // editing makes it a draft again
   if (report.status === "NEEDS_CORRECTION") {
     report.status = "DRAFT";
     report.managerFeedback = "";
@@ -216,7 +259,7 @@ const approveReport = async (reportID, managerID) => {
   if (!report) {
     throw new AppError("Report not found", 404);
   }
-
+console.log("Report found:", report.status);
   if (report.status !== "SUBMITTED") {
     throw new AppError("Only submitted reports can be approved", 400);
   }
@@ -231,17 +274,13 @@ const approveReport = async (reportID, managerID) => {
   return report;
 };
 
-const requestCorrection = async (
-  reportID,
-  managerID,
-  feedback
-) => {
-  const report = await reportModel.findOne(reportID);
+const requestCorrection = async (reportID, managerFeedback) => {
+  const report = await reportModel.findById(reportID);
 
   if (!report) {
     throw new AppError("Report not found", 404);
   }
-console.log("Report found:", report);
+
   if (report.status !== "SUBMITTED") {
     throw new AppError(
       "Only submitted reports can be sent for correction",
@@ -250,11 +289,10 @@ console.log("Report found:", report);
   }
 
   report.status = "NEEDS_CORRECTION";
-  report.reviewedBy = managerID;
   report.reviewedAt = new Date();
 
   report.managerFeedback =
-    feedback ||
+    managerFeedback ||
     "Please review and correct your report.";
 
   await report.save();

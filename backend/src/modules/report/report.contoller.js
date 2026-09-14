@@ -42,14 +42,22 @@ const getAllReportsController = async (req, res, next) => {
 
 const updateReportController = async (req, res, next) => {
   try {
-    const { reportID, ...data } = req.body;
-    console.log("Report ID:", reportID);
-    console.log("Data to update:", data);
-    const result = await reportService.updateReport(
+    const {
       reportID,
-      req.user.id,
-      data,
-    );
+      weekStart,
+      weekEnd,
+      workCompleted,
+      plannedWork,
+      blockers,
+    } = req.body;
+
+    const result = await reportService.updateReport(reportID, req.user.id, {
+      weekStart,
+      weekEnd,
+      workCompleted,
+      plannedWork,
+      blockers,
+    });
 
     res.status(200).json({
       success: true,
@@ -57,6 +65,7 @@ const updateReportController = async (req, res, next) => {
       data: result,
     });
   } catch (error) {
+    console.error("Update report controller error:", error);
     next(error);
   }
 };
@@ -93,11 +102,11 @@ const approveReportController = async (req, res, next) => {
 
 const requestCorrectionController = async (req, res, next) => {
   try {
-    const { reportID,...data } = req.body;
+    const { reportID, managerFeedback } = req.body;
+
     const result = await reportService.requestCorrection(
       reportID,
-      req.user.id,
-      data,
+      managerFeedback,
     );
 
     res.status(200).json({

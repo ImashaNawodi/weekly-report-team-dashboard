@@ -32,7 +32,7 @@ export default function LoginPage() {
       const response = await userSignInService(values);
       if (response.success) {
         console.log("Login successful:", response);
-        navigate("/dashboard");
+        navigate("/manager-home/dashboard");
       } else {
         console.error("Login failed:", response.message);
       }

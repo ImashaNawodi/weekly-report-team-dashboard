@@ -39,4 +39,11 @@ router.post(
   projectController.updateProjectStatusController,
 );
 
+router.get(
+  "/get-my-project",
+  authenticate,
+  //authorize("ADMIN"),
+  projectController.getUserProjectsController,
+);
+
 module.exports = router;

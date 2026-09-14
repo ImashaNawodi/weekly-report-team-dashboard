@@ -24,6 +24,11 @@ const mainNav = [
     icon: <LayoutDashboard size={18} />,
   },
   {
+    key: "managerDashboard",
+    label: "Manager Dashboard",
+    icon: <LayoutDashboard size={18} />,
+  },
+  {
     key: "projects",
     label: "Projects",
     icon: <FolderKanban size={18} />,
@@ -64,6 +69,10 @@ const pageHeaders = {
     title: "Dashboard",
     subtitle: "Overview of your team's activity",
   },
+  managerDashboard: {
+    title: "Manager Dashboard",
+    subtitle: "Overview of your team's activity",
+  },
   projects: {
     title: "Projects",
     subtitle: "Manage your team's projects easily and efficiently",
@@ -74,7 +83,7 @@ const pageHeaders = {
   },
   reports: {
     title: "Weekly Reports",
-    subtitle: "Review and manage your team's weekly reports",
+    subtitle: " team's weekly reports",
   },
   analytics: {
     title: "Analytics",

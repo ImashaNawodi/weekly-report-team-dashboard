@@ -70,7 +70,7 @@ export async function updateUserProfileService(profileData) {
   }
 }
 
-export async function updateUserRoleService(role) {
+export async function updateUserRoleService(userAccountID, role) {
   try {
     const response = await fetch(`${serviceURL}/users/update-role`, {
       method: "POST",
@@ -82,6 +82,7 @@ export async function updateUserRoleService(role) {
       credentials: "include",
 
       body: JSON.stringify({
+        userAccountID,
         role,
       }),
     });

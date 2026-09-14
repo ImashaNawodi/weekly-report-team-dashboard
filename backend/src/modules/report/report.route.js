@@ -15,21 +15,21 @@ router.post(
 router.get(
   "/my-reports",
   authenticate,
-  authorize("TEAM_MEMBER"),
+  //authorize("TEAM_MEMBER"),
   reportController.getMyReportsController,
 );
 
 router.get(
   "/all-reports",
   authenticate,
-  authorize("MANAGER", "ADMIN"),
+  //authorize("MANAGER", "ADMIN"),
   reportController.getAllReportsController,
 );
 
 router.post(
   "/update-report",
   authenticate,
-  authorize("TEAM_MEMBER"),
+  ///authorize("TEAM_MEMBER"),
   validate(updateReportSchema),
   reportController.updateReportController
 );

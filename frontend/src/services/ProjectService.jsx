@@ -138,3 +138,35 @@ export async function updateProjectStatusService(projectID, projectData) {
     };
   }
 }
+
+export async function getUserProjectsService() {
+  try { 
+    const response = await fetch(`${serviceURL}/projects/get-my-project`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: data.message || "Failed to retrieve user projects",
+      };
+    }
+
+    return {
+      success: true,
+      message: data.message,
+      data: data.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Something went wrong. Please try again later.",
+    };
+  }
+}

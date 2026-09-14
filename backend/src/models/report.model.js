@@ -40,7 +40,7 @@ const reportVersionSchema = new mongoose.Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const reportSchema = new mongoose.Schema(
@@ -62,6 +62,10 @@ const reportSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
       required: true,
+    },
+     weekNumber: {
+      type: Number,
+     
     },
 
     weekStart: {
@@ -94,12 +98,7 @@ const reportSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "DRAFT",
-        "SUBMITTED",
-        "NEEDS_CORRECTION",
-        "APPROVED",
-      ],
+      enum: ["DRAFT", "SUBMITTED", "NEEDS_CORRECTION", "APPROVED"],
       default: "DRAFT",
     },
 
@@ -132,7 +131,7 @@ const reportSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 reportSchema.index({

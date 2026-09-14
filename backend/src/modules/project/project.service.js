@@ -37,7 +37,7 @@ const createProject = async (data) => {
 const getAllProjects = async () => {
   const projects = await projectModel
     .find()
-    .populate("teamMembers", "firstName lastName email role")
+    .populate("teamMembers", "firstName lastName email role isActive")
     .sort({ createdAt: -1 });
 
     return projects.map((project) => ({
@@ -138,9 +138,37 @@ const updateProjectStatus = async (projectID, data) => {
   };
 };
 
+const getUserProjects = async (userID) => {
+  const user = await userModel.findById(userID);
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  const projects = await projectModel
+    .find({
+      teamMembers: userID,
+    })
+    .populate("teamMembers", "firstName lastName email role isActive")
+    .sort({ createdAt: -1 });
+
+  return projects.map((project) => ({
+    projectNumber: project.projectNumber,
+    projectID: project._id,
+    name: project.name,
+    description: project.description,
+    teamMembers: project.teamMembers,
+    numberOfTeamMembers: project.teamMembers.length,
+    isActive: project.isActive,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  }));
+};
+
 module.exports = {
   createProject,
   getAllProjects,
   updateProject,
   updateProjectStatus,
+  getUserProjects,
 };
