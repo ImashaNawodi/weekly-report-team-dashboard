@@ -10,7 +10,6 @@ const {
 const authenticate = require("../../middleware/authenticate.middleware");
 const authorize = require("../../middleware/authorize.midleware");
 
-// check this condition later
 router.post(
   "/create",
   authenticate,
@@ -21,7 +20,7 @@ router.post(
 router.get(
   "/get-all-projects",
   authenticate,
-  authorize("MANAGER"),
+  authorize("MANAGER","ADMIN"),
   projectController.getAllProjectsController,
 );
 router.post(
