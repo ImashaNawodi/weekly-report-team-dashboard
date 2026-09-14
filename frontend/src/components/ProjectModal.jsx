@@ -48,14 +48,7 @@ export default function ProjectModal({
         })
         .filter(Boolean);
 
-      ("Available Members with IDs:",
-        members.map((member) => ({
-          _id: member._id,
-          id: member.id,
-          userID: member.userID,
-          firstName: member.firstName,
-          lastName: member.lastName,
-        })));
+      
 
       form.setFieldsValue({
         name: editingProject.name || "",
