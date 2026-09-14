@@ -12,4 +12,26 @@ const generateToken = (user) => {
     },
   );
 };
-module.exports = { generateToken };
+
+const generateResetToken = (user) => {
+  return jwt.sign(
+    {
+      userID: user._id.toString(),
+      type: "PASSWORD_RESET",
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "15m",
+    },
+  );
+};
+
+const verifyToken = (token) => {
+  return jwt.verify(token, process.env.JWT_SECRET);
+};
+
+module.exports = {
+  generateToken,
+  generateResetToken,
+  verifyToken,
+};

@@ -89,3 +89,70 @@ export async function logoutService() {
 
   return await response.json();
 }
+
+export async function forgotPasswordService(data) {
+  try {
+    const response = await fetch(`${serviceURL}/auth/forgot-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      return {
+        success: false,
+        message: result.message || "Password reset failed",
+      };
+    }
+
+    return {
+      success: true,
+      message: result.message,
+      data: result.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Something went wrong",
+    };
+  }
+}
+
+export async function resetPasswordService(data) {
+  try {
+    const response = await fetch(`${serviceURL}/auth/reset-password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      return {
+        success: false,
+        message: result.message || "Password reset failed",
+      };
+    }
+
+    return {
+      success: true,
+      message: result.message,
+      data: result.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Something went wrong",
+    };
+  }
+}
+

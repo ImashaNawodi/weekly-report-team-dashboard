@@ -245,12 +245,12 @@ export default function LoginPage() {
                   <span className="text-sm text-slate-600">Remember me</span>
                 </Checkbox>
 
-                <a
-                  href="#"
-                  className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+               <Text
+                  className="text-blue-600 cursor-pointer text-sm hover:underline"
+                  onClick={() => navigate("/check-user")}
                 >
-                  Forgot password?
-                </a>
+                  Forgot Password?
+                </Text>
               </div>
 
               <Button

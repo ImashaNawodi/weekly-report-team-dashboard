@@ -81,11 +81,29 @@ const authMeController = async (req, res) => {
   }
 };
 
+const resetPasswordController = async (req, res) => {
+  try {
+    const result = await authService.resetPassword(req.body);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+      data: result,
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Password reset failed",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
   forgetPasswordController,
   logoutController,
   authMeController,
+  resetPasswordController,
 };
 
