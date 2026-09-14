@@ -14,27 +14,27 @@ const authorize = require("../../middleware/authorize.midleware");
 router.post(
   "/create",
   authenticate,
-  //authorize("ADMIN"),
+  authorize("MANAGER"),
   validate(createProjectSchema),
   projectController.createProjectController,
 );
 router.get(
   "/get-all-projects",
   authenticate,
-  //authorize("ADMIN"),
+  authorize("MANAGER"),
   projectController.getAllProjectsController,
 );
 router.post(
   "/update-project",
   authenticate,
-  authorize("ADMIN", "MANAGER"),
+  authorize("MANAGER"),
  //validate(updateProjectSchema),
   projectController.updateProjectController,
 );
 router.post(
   "/update-project-status",
   authenticate,
-  authorize("ADMIN", "MANAGER"),
+  authorize("MANAGER"),
   //validate(updateProjectStatusSchema),
   projectController.updateProjectStatusController,
 );
@@ -42,7 +42,7 @@ router.post(
 router.get(
   "/get-my-project",
   authenticate,
-  //authorize("ADMIN"),
+  authorize("MANAGER", "TEAM_MEMBER"),
   projectController.getUserProjectsController,
 );
 

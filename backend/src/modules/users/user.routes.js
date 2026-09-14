@@ -24,21 +24,21 @@ router.post(
 router.post(
   "/update-role",
   authenticate,
-  //authorize("ADMIN"),
+  authorize("ADMIN"),
   //validate(updateRoleSchema),
   userController.updateUserRoleController,
 );
 router.post(
   "/update-status",
   authenticate,
-  // authorize("ADMIN"),
+  authorize("ADMIN"),
   validate(updateUserStatusSchema),
   userController.updateUserStatusController,
 );
 router.get(
   "/all-users",
   authenticate,
-  //authorize("MANAGER", "ADMIN"),
+  authorize("ADMIN"),
   userController.getAllUsersController,
 );
 module.exports = router;
