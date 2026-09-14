@@ -60,9 +60,32 @@ const logoutController = (req, res) => {
     message: "User logged out successfully",
   });
 };
+
+const authMeController = async (req, res) => {
+  try {
+    console.log("authMeController: req.user:", req);
+    const user = await authService.getAuthUser(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      message: "Authenticated user retrieved successfully",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
 module.exports = {
   registerController,
   loginController,
   forgetPasswordController,
   logoutController,
+  authMeController,
 };
+

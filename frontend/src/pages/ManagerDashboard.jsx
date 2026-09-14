@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   SearchOutlined,
@@ -9,8 +9,6 @@ import {
   ExclamationCircleOutlined,
   UserOutlined,
   CalendarOutlined,
-  LeftOutlined,
-  RightOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
 
@@ -30,6 +28,19 @@ import {
   Tooltip,
   message,
 } from "antd";
+
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  Legend,
+} from "recharts";
 
 import dayjs from "dayjs";
 
@@ -106,7 +117,6 @@ const ManagerDashboard = () => {
   const handleReportSuccess = async () => {
     setReportModalOpen(false);
     setEditingReport(null);
-
     await fetchReports();
   };
 
@@ -175,35 +185,6 @@ const ManagerDashboard = () => {
       throw error;
     }
   };
-
- const weekScopedReports = reports.filter((report) => {
-  if (report.status === "DRAFT") {
-    return false;
-  }
-
-  return (
-    weekFilter === "all" ||
-    Number(report.weekNumber) === Number(weekFilter)
-  );
-});
-
-const stats = {
-  total: weekScopedReports.length,
-
-  submitted: weekScopedReports.filter(
-    (report) => report.status === "SUBMITTED",
-  ).length,
-
-  approved: weekScopedReports.filter(
-    (report) => report.status === "APPROVED",
-  ).length,
-
-  correction: weekScopedReports.filter(
-    (report) =>
-      report.status === "NEEDS_CORRECTION" ||
-      report.status === "CORRECTION_REQUIRED",
-  ).length,
-};
 
   const getReportMember = (report) => {
     return (
@@ -276,79 +257,103 @@ const stats = {
     return "Unknown Member";
   };
 
-  const uniqueProjects = Array.from(
-    new Map(
-      reports
-        .map((report) => {
-          const project = report.project;
+  const getProjectId = (report) => {
+    const project = report.project;
 
-          if (!project) {
-            return null;
-          }
+    if (!project) {
+      return null;
+    }
 
-          const id =
-            project._id ||
-            project.projectID ||
-            project;
+    return (
+      project._id ||
+      project.projectID ||
+      project.projectId ||
+      project.id ||
+      project
+    );
+  };
 
-          const name =
-            project.name ||
-            project.projectName ||
-            "Unknown Project";
+  const getProjectName = (report) => {
+    return (
+      report.project?.name ||
+      report.project?.projectName ||
+      "Unknown Project"
+    );
+  };
 
-          return [
-            String(id),
+  const uniqueProjects = useMemo(() => {
+    return Array.from(
+      new Map(
+        reports
+          .map((report) => {
+            const project = report.project;
+
+            if (!project) {
+              return null;
+            }
+
+            const id = getProjectId(report);
+
+            const name = getProjectName(report);
+
+            return [
+              String(id),
+              {
+                id: String(id),
+                name,
+              },
+            ];
+          })
+          .filter(Boolean),
+      ).values(),
+    );
+  }, [reports]);
+
+  const uniqueTeamMembers = useMemo(() => {
+    return Array.from(
+      new Map(
+        reports
+          .map((report) => {
+            const memberId = getMemberId(report);
+
+            if (!memberId) {
+              return null;
+            }
+
+            return [
+              String(memberId),
+              {
+                id: String(memberId),
+                name: getMemberName(report),
+              },
+            ];
+          })
+          .filter(Boolean),
+      ).values(),
+    );
+  }, [reports]);
+
+  const availableWeeks = useMemo(() => {
+    return Array.from(
+      new Map(
+        reports
+          .filter((report) => report.status !== "DRAFT")
+          .filter(
+            (report) =>
+              report.weekNumber !== undefined &&
+              report.weekNumber !== null,
+          )
+          .map((report) => [
+            Number(report.weekNumber),
             {
-              id: String(id),
-              name,
+              weekNumber: Number(report.weekNumber),
+              weekStart: report.weekStart,
+              weekEnd: report.weekEnd,
             },
-          ];
-        })
-        .filter(Boolean),
-    ).values(),
-  );
-
-  const uniqueTeamMembers = Array.from(
-    new Map(
-      reports
-        .map((report) => {
-          const memberId = getMemberId(report);
-
-          if (!memberId) {
-            return null;
-          }
-
-          return [
-            String(memberId),
-            {
-              id: String(memberId),
-              name: getMemberName(report),
-            },
-          ];
-        })
-        .filter(Boolean),
-    ).values(),
-  );
-
-  const availableWeeks = Array.from(
-    new Map(
-      reports
-        .filter((report) => report.status !== "DRAFT")
-        .filter(
-          (report) =>
-            report.weekNumber !== undefined &&
-            report.weekNumber !== null,
-        )
-        .map((report) => [
-          Number(report.weekNumber),
-          {
-            weekNumber: Number(report.weekNumber),
-            weekStart: report.weekStart,
-            weekEnd: report.weekEnd,
-          },
-        ]),
-    ).values(),
-  ).sort((a, b) => a.weekNumber - b.weekNumber);
+          ]),
+      ).values(),
+    ).sort((a, b) => a.weekNumber - b.weekNumber);
+  }, [reports]);
 
   const weekOptions = [
     {
@@ -366,96 +371,136 @@ const stats = {
       Number(week.weekNumber) === Number(weekFilter),
   );
 
-  const filteredReports = reports.filter((report) => {
-    if (report.status === "DRAFT") {
-      return false;
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-
-    const projectName =
-      report.project?.name ||
-      report.project?.projectName ||
-      "";
-
-    const reportNumber = report.reportNumber || "";
-
-    const workCompleted = report.workCompleted || "";
-
-    const memberName = getMemberName(report);
-
-    const matchesSearch =
-      !query ||
-      reportNumber.toLowerCase().includes(query) ||
-      projectName.toLowerCase().includes(query) ||
-      workCompleted.toLowerCase().includes(query) ||
-      memberName.toLowerCase().includes(query);
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      report.status === statusFilter;
-
-    const reportProjectId =
-      report.project?._id ||
-      report.project?.projectID ||
-      report.project;
-
-    const matchesProject =
-      projectFilter === "all" ||
-      String(reportProjectId) ===
-        String(projectFilter);
-
-    const reportMemberId = getMemberId(report);
-
-    const matchesTeamMember =
-      teamMemberFilter === "all" ||
-      String(reportMemberId) ===
-        String(teamMemberFilter);
-
-    const matchesWeek =
-      weekFilter === "all" ||
-      Number(report.weekNumber) ===
-        Number(weekFilter);
-
-    let matchesDate = true;
-
-    if (dateRange && dateRange.length === 2) {
-      const [startDate, endDate] = dateRange;
-
-      const reportDate = dayjs(report.weekStart);
-
-      if (!reportDate.isValid()) {
-        matchesDate = false;
-      } else {
-        matchesDate =
-          reportDate.isSame(startDate, "day") ||
-          reportDate.isSame(endDate, "day") ||
-          (reportDate.isAfter(
-            startDate,
-            "day",
-          ) &&
-            reportDate.isBefore(
-              endDate,
-              "day",
-            ));
+  const weekScopedReports = useMemo(() => {
+    return reports.filter((report) => {
+      if (report.status === "DRAFT") {
+        return false;
       }
-    }
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesProject &&
-      matchesTeamMember &&
-      matchesWeek &&
-      matchesDate
-    );
-  });
+      return (
+        weekFilter === "all" ||
+        Number(report.weekNumber) === Number(weekFilter)
+      );
+    });
+  }, [reports, weekFilter]);
 
-  const selectedWeekMemberCount = new Set(
-    filteredReports.map((report) =>
-      String(getMemberId(report)),
-    ),
-  ).size;
+  const stats = {
+    total: weekScopedReports.length,
+
+    submitted: weekScopedReports.filter(
+      (report) => report.status === "SUBMITTED",
+    ).length,
+
+    approved: weekScopedReports.filter(
+      (report) => report.status === "APPROVED",
+    ).length,
+
+    correction: weekScopedReports.filter(
+      (report) =>
+        report.status === "NEEDS_CORRECTION" ||
+        report.status === "CORRECTION_REQUIRED",
+    ).length,
+  };
+
+  const filteredReports = useMemo(() => {
+    return reports.filter((report) => {
+      if (report.status === "DRAFT") {
+        return false;
+      }
+
+      const query = searchQuery.toLowerCase().trim();
+
+      const projectName = getProjectName(report);
+
+      const reportNumber = String(
+        report.reportNumber || "",
+      );
+
+      const workCompleted = String(
+        report.workCompleted || "",
+      );
+
+      const memberName = getMemberName(report);
+
+      const matchesSearch =
+        !query ||
+        reportNumber.toLowerCase().includes(query) ||
+        projectName.toLowerCase().includes(query) ||
+        workCompleted.toLowerCase().includes(query) ||
+        memberName.toLowerCase().includes(query);
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        report.status === statusFilter;
+
+      const reportProjectId = getProjectId(report);
+
+      const matchesProject =
+        projectFilter === "all" ||
+        String(reportProjectId) === String(projectFilter);
+
+      const reportMemberId = getMemberId(report);
+
+      const matchesTeamMember =
+        teamMemberFilter === "all" ||
+        String(reportMemberId) ===
+          String(teamMemberFilter);
+
+      const matchesWeek =
+        weekFilter === "all" ||
+        Number(report.weekNumber) ===
+          Number(weekFilter);
+
+      let matchesDate = true;
+
+      if (dateRange && dateRange.length === 2) {
+        const [startDate, endDate] = dateRange;
+
+        const reportDate = dayjs(report.weekStart);
+
+        if (!reportDate.isValid()) {
+          matchesDate = false;
+        } else {
+          matchesDate =
+            reportDate.isSame(startDate, "day") ||
+            reportDate.isSame(endDate, "day") ||
+            (reportDate.isAfter(
+              startDate,
+              "day",
+            ) &&
+              reportDate.isBefore(
+                endDate,
+                "day",
+              ));
+        }
+      }
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesProject &&
+        matchesTeamMember &&
+        matchesWeek &&
+        matchesDate
+      );
+    });
+  }, [
+    reports,
+    searchQuery,
+    statusFilter,
+    projectFilter,
+    teamMemberFilter,
+    weekFilter,
+    dateRange,
+  ]);
+
+  const selectedWeekMemberCount = useMemo(() => {
+    return new Set(
+      weekScopedReports.map((report) =>
+        String(getMemberId(report)),
+      ),
+    ).size;
+  }, [weekScopedReports]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -467,6 +512,154 @@ const stats = {
     weekFilter,
     dateRange,
   ]);
+
+  const statusChartData = useMemo(() => {
+    const dataMap = new Map();
+
+    weekScopedReports.forEach((report) => {
+      const memberName = getMemberName(report);
+
+      if (!dataMap.has(memberName)) {
+        dataMap.set(memberName, {
+          name: memberName,
+          submitted: 0,
+          approved: 0,
+          correction: 0,
+        });
+      }
+
+      const item = dataMap.get(memberName);
+
+      if (report.status === "SUBMITTED") {
+        item.submitted += 1;
+      }
+
+      if (report.status === "APPROVED") {
+        item.approved += 1;
+      }
+
+      if (
+        report.status === "NEEDS_CORRECTION" ||
+        report.status === "CORRECTION_REQUIRED"
+      ) {
+        item.correction += 1;
+      }
+    });
+
+    return Array.from(dataMap.values()).sort(
+      (a, b) =>
+        b.submitted +
+        b.approved +
+        b.correction -
+        (a.submitted +
+          a.approved +
+          a.correction),
+    );
+  }, [weekScopedReports]);
+
+  const reportsTrendData = useMemo(() => {
+    const dataMap = new Map();
+
+    reports
+      .filter((report) => report.status !== "DRAFT")
+      .forEach((report) => {
+        const week = Number(report.weekNumber);
+
+        if (!Number.isFinite(week)) {
+          return;
+        }
+
+        if (!dataMap.has(week)) {
+          dataMap.set(week, {
+            week,
+            submitted: 0,
+            approved: 0,
+            correction: 0,
+          });
+        }
+
+        const item = dataMap.get(week);
+
+        if (report.status === "SUBMITTED") {
+          item.submitted += 1;
+        }
+
+        if (report.status === "APPROVED") {
+          item.approved += 1;
+        }
+
+        if (
+          report.status === "NEEDS_CORRECTION" ||
+          report.status === "CORRECTION_REQUIRED"
+        ) {
+          item.correction += 1;
+        }
+      });
+
+    return Array.from(dataMap.values())
+      .sort((a, b) => a.week - b.week)
+      .map((item) => ({
+        ...item,
+        name: `Week ${item.week}`,
+      }));
+  }, [reports]);
+
+  const projectWorkloadData = useMemo(() => {
+    const dataMap = new Map();
+
+    weekScopedReports.forEach((report) => {
+      const projectName = getProjectName(report);
+
+      dataMap.set(
+        projectName,
+        (dataMap.get(projectName) || 0) + 1,
+      );
+    });
+
+    return Array.from(dataMap.entries())
+      .map(([name, reportsCount]) => ({
+        name,
+        reports: reportsCount,
+      }))
+      .sort((a, b) => b.reports - a.reports);
+  }, [weekScopedReports]);
+
+  const memberWorkloadData = useMemo(() => {
+    const dataMap = new Map();
+
+    weekScopedReports.forEach((report) => {
+      const memberName = getMemberName(report);
+
+      dataMap.set(
+        memberName,
+        (dataMap.get(memberName) || 0) + 1,
+      );
+    });
+
+    return Array.from(dataMap.entries())
+      .map(([name, reportsCount]) => ({
+        name,
+        reports: reportsCount,
+      }))
+      .sort((a, b) => b.reports - a.reports);
+  }, [weekScopedReports]);
+
+  const recentActivity = useMemo(() => {
+    return [...reports]
+      .filter((report) => report.status !== "DRAFT")
+      .sort((a, b) => {
+        const dateA = new Date(
+          a.updatedAt || a.createdAt || 0,
+        ).getTime();
+
+        const dateB = new Date(
+          b.updatedAt || b.createdAt || 0,
+        ).getTime();
+
+        return dateB - dateA;
+      })
+      .slice(0, 6);
+  }, [reports]);
 
   const renderStatus = (status) => {
     switch (status) {
@@ -496,9 +689,7 @@ const stats = {
       case "CORRECTION_REQUIRED":
         return (
           <Tag
-            icon={
-              <ExclamationCircleOutlined />
-            }
+            icon={<ExclamationCircleOutlined />}
             color="warning"
             className="rounded-md px-2 py-1"
           >
@@ -513,6 +704,71 @@ const stats = {
           </Tag>
         );
     }
+  };
+
+  const getActivityIcon = (status) => {
+    if (status === "APPROVED") {
+      return (
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-50">
+          <CheckCircleOutlined className="text-green-500" />
+        </div>
+      );
+    }
+
+    if (
+      status === "NEEDS_CORRECTION" ||
+      status === "CORRECTION_REQUIRED"
+    ) {
+      return (
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-50">
+          <ExclamationCircleOutlined className="text-orange-500" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
+        <FileTextOutlined className="text-blue-500" />
+      </div>
+    );
+  };
+
+  const getActivityText = (report) => {
+    const memberName = getMemberName(report);
+    const reportNumber =
+      report.reportNumber || "Report";
+    const weekText = report.weekNumber
+      ? `Week ${report.weekNumber}`
+      : "";
+
+    if (report.status === "APPROVED") {
+      return `${memberName}'s ${weekText} report was approved`;
+    }
+
+    if (
+      report.status === "NEEDS_CORRECTION" ||
+      report.status === "CORRECTION_REQUIRED"
+    ) {
+      return `${memberName}'s ${weekText} report needs correction`;
+    }
+
+    return `${memberName} submitted ${reportNumber}`;
+  };
+
+  const formatActivityDate = (report) => {
+    const date = report.updatedAt || report.createdAt;
+
+    if (!date) {
+      return "Recently";
+    }
+
+    const parsed = dayjs(date);
+
+    if (!parsed.isValid()) {
+      return "Recently";
+    }
+
+    return parsed.format("DD MMM YYYY, hh:mm A");
   };
 
   const formatDate = (date) => {
@@ -581,10 +837,7 @@ const stats = {
       width: 200,
 
       render: (_, report) => {
-        const projectName =
-          report.project?.name ||
-          report.project?.projectName ||
-          "Unknown Project";
+        const projectName = getProjectName(report);
 
         return (
           <div className="flex items-center gap-2">
@@ -729,8 +982,6 @@ const stats = {
 
   return (
     <div className="min-h-full bg-slate-50 p-4 sm:p-6 lg:p-8">
-     
-
       <Card className="mb-6 rounded-xl border-0 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
@@ -763,44 +1014,45 @@ const stats = {
               optionFilterProp="label"
             />
 
-           {selectedWeek && (
-  <div className="flex flex-1 items-center gap-3 whitespace-nowrap">
-    <Tag
-      color="blue"
-      className="m-0 rounded-md px-3 py-1"
-    >
-      Week {selectedWeek.weekNumber}
-    </Tag>
+            {selectedWeek && (
+              <div className="flex flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap">
+                <Tag
+                  color="blue"
+                  className="m-0 rounded-md px-3 py-1"
+                >
+                  Week {selectedWeek.weekNumber}
+                </Tag>
 
-    <span className="text-sm text-slate-500">
-      {formatDate(selectedWeek.weekStart)} -{" "}
-      {formatDate(selectedWeek.weekEnd)}
-    </span>
+                <span className="text-sm text-slate-500">
+                  {formatDate(selectedWeek.weekStart)} -{" "}
+                  {formatDate(selectedWeek.weekEnd)}
+                </span>
 
-    <span className="text-sm font-medium text-slate-700">
-      {selectedWeekMemberCount} team member
-      {selectedWeekMemberCount !== 1 ? "s" : ""} ·{" "}
-      {filteredReports.length} report
-      {filteredReports.length !== 1 ? "s" : ""}
-    </span>
+                <span className="text-sm font-medium text-slate-700">
+                  {selectedWeekMemberCount} team member
+                  {selectedWeekMemberCount !== 1
+                    ? "s"
+                    : ""}{" "}
+                  · {weekScopedReports.length} report
+                  {weekScopedReports.length !== 1
+                    ? "s"
+                    : ""}
+                </span>
 
-    {weekFilter !== "all" && (
-      <Button
-        type="text"
-        size="small"
-        icon={<CloseOutlined />}
-        onClick={() => setWeekFilter("all")}
-        className="flex-shrink-0 text-slate-400 hover:text-red-500"
-      />
-    )}
-  </div>
-)}
-
-     
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<CloseOutlined />}
+                  onClick={() => setWeekFilter("all")}
+                  className="flex-shrink-0 text-slate-400 hover:text-red-500"
+                />
+              </div>
+            )}
           </div>
         </div>
       </Card>
-       <Row
+
+      <Row
         gutter={[16, 16]}
         className="mb-6 items-stretch"
       >
@@ -852,6 +1104,382 @@ const stats = {
           </Card>
         </Col>
       </Row>
+
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={24} lg={14}>
+          <Card
+            className="h-full rounded-xl border-0 shadow-sm"
+            title={
+              <div>
+                <div className="text-base font-semibold text-slate-800">
+                  Report Status by Team Member
+                </div>
+
+                <div className="text-xs font-normal text-slate-400">
+                  {selectedWeek
+                    ? `Week ${selectedWeek.weekNumber} report status`
+                    : "Team-wide report status"}
+                </div>
+              </div>
+            }
+          >
+            {statusChartData.length === 0 ? (
+              <div className="flex h-[320px] items-center justify-center">
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No report status data available"
+                />
+              </div>
+            ) : (
+              <ResponsiveContainer
+                width="100%"
+                height={320}
+              >
+                <BarChart
+                  data={statusChartData}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <ChartTooltip />
+
+                  <Legend />
+
+                  <Bar
+                    dataKey="submitted"
+                    name="Submitted"
+                    stackId="status"
+                    fill="#60a5fa"
+                  />
+
+                  <Bar
+                    dataKey="approved"
+                    name="Approved"
+                    stackId="status"
+                    fill="#4ade80"
+                  />
+
+                  <Bar
+                    dataKey="correction"
+                    name="Needs Correction"
+                    stackId="status"
+                    fill="#fb923c"
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={10}>
+          <Card
+            className="h-full rounded-xl border-0 shadow-sm"
+            title={
+              <div>
+                <div className="text-base font-semibold text-slate-800">
+                  Reports Submitted Over Time
+                </div>
+
+                <div className="text-xs font-normal text-slate-400">
+                  Weekly reporting activity
+                </div>
+              </div>
+            }
+          >
+            {reportsTrendData.length === 0 ? (
+              <div className="flex h-[320px] items-center justify-center">
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No trend data available"
+                />
+              </div>
+            ) : (
+              <ResponsiveContainer
+                width="100%"
+                height={320}
+              >
+                <LineChart
+                  data={reportsTrendData}
+                  margin={{
+                    top: 10,
+                    right: 10,
+                    left: -20,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+
+                  <XAxis
+                    dataKey="name"
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <YAxis
+                    allowDecimals={false}
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <ChartTooltip />
+
+                  <Legend />
+
+                  <Line
+                    type="monotone"
+                    dataKey="submitted"
+                    name="Submitted"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="approved"
+                    name="Approved"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+
+                  <Line
+                    type="monotone"
+                    dataKey="correction"
+                    name="Needs Correction"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={24} lg={12}>
+          <Card
+            className="h-full rounded-xl border-0 shadow-sm"
+            title={
+              <div>
+                <div className="text-base font-semibold text-slate-800">
+                  Workload by Project
+                </div>
+
+                <div className="text-xs font-normal text-slate-400">
+                  Number of reports by project
+                </div>
+              </div>
+            }
+          >
+            {projectWorkloadData.length === 0 ? (
+              <div className="flex h-[320px] items-center justify-center">
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No project workload data"
+                />
+              </div>
+            ) : (
+              <ResponsiveContainer
+                width="100%"
+                height={320}
+              >
+                <BarChart
+                  data={projectWorkloadData}
+                  layout="vertical"
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 20,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                  />
+
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <ChartTooltip />
+
+                  <Bar
+                    dataKey="reports"
+                    name="Reports"
+                    fill="#6366f1"
+                    radius={[0, 5, 5, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={12}>
+          <Card
+            className="h-full rounded-xl border-0 shadow-sm"
+            title={
+              <div>
+                <div className="text-base font-semibold text-slate-800">
+                  Team Member Workload
+                </div>
+
+                <div className="text-xs font-normal text-slate-400">
+                  Report activity by team member
+                </div>
+              </div>
+            }
+          >
+            {memberWorkloadData.length === 0 ? (
+              <div className="flex h-[320px] items-center justify-center">
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="No team workload data"
+                />
+              </div>
+            ) : (
+              <ResponsiveContainer
+                width="100%"
+                height={320}
+              >
+                <BarChart
+                  data={memberWorkloadData}
+                  layout="vertical"
+                  margin={{
+                    top: 10,
+                    right: 20,
+                    left: 20,
+                    bottom: 10,
+                  }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    horizontal={false}
+                  />
+
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                  />
+
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={110}
+                    tick={{
+                      fontSize: 12,
+                    }}
+                  />
+
+                  <ChartTooltip />
+
+                  <Bar
+                    dataKey="reports"
+                    name="Reports"
+                    fill="#8b5cf6"
+                    radius={[0, 5, 5, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      <Card
+        className="mb-6 rounded-xl border-0 shadow-sm"
+        title={
+          <div>
+            <div className="text-base font-semibold text-slate-800">
+              Recent Activity
+            </div>
+
+            <div className="text-xs font-normal text-slate-400">
+              Recent submissions and review activity
+            </div>
+          </div>
+        }
+      >
+        {recentActivity.length === 0 ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="No recent activity"
+          />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {recentActivity.map((report) => (
+              <div
+                key={report._id}
+                className="flex items-center gap-4 py-4"
+              >
+                {getActivityIcon(report.status)}
+
+                <div className="min-w-0 flex-1">
+                  <p className="m-0 truncate text-sm font-medium text-slate-700">
+                    {getActivityText(report)}
+                  </p>
+
+                  <p className="m-0 mt-1 text-xs text-slate-400">
+                    {getProjectName(report)}
+                    {report.reportNumber
+                      ? ` · ${report.reportNumber}`
+                      : ""}
+                  </p>
+                </div>
+
+                <div className="hidden sm:block">
+                  {renderStatus(report.status)}
+                </div>
+
+                <span className="whitespace-nowrap text-xs text-slate-400">
+                  {formatActivityDate(report)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       <Card
         className="mb-6 rounded-xl border-0 shadow-sm"
@@ -1042,10 +1670,8 @@ const stats = {
               pageSize: PAGE_SIZE,
               total: filteredReports.length,
               showSizeChanger: false,
-
               showTotal: (total, range) =>
                 `Showing ${range[0]}–${range[1]} of ${total}`,
-
               onChange: (page) =>
                 setCurrentPage(page),
             }}

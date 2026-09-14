@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -11,9 +11,13 @@ import {
   HelpCircle,
   ChevronLeft,
   Zap,
+  LogOut,
 } from "lucide-react";
 
-import { Layout, Menu, Button, Badge, Tooltip } from "antd";
+import { Layout, Menu, Button, Badge, Tooltip, message } from "antd";
+
+import { AuthContext } from "../context/AuthContext";
+import { logoutService } from "../services/AuthService";
 
 const { Sider } = Layout;
 
@@ -42,7 +46,6 @@ const mainNav = [
     key: "reports",
     label: "Weekly Reports",
     icon: <FileText size={18} />,
-    badge: "3",
   },
   {
     key: "analytics",
@@ -103,6 +106,7 @@ export default function Sidebar({ setHeader }) {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("dashboard");
 
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const menuItems = mainNav.map((item) => ({
@@ -137,6 +141,23 @@ export default function Sidebar({ setHeader }) {
     setSelectedKey(key);
     setHeader(pageHeaders[key]);
     navigate(`/manager-home/${key}`);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await logoutService();
+
+      if (response.success) {
+        setUser(null);
+        message.success("Logged out successfully");
+        navigate("/login", { replace: true });
+      } else {
+        message.error(response.message || "Logout failed");
+      }
+    } catch (error) {
+      console.error("LOGOUT ERROR:", error);
+      message.error("Unable to logout");
+    }
   };
 
   return (
@@ -226,6 +247,27 @@ export default function Sidebar({ setHeader }) {
         </div>
 
         <div className="shrink-0 border-t border-slate-100 p-3">
+          <Tooltip title={collapsed ? "Logout" : ""} placement="right">
+            <Button
+              type="text"
+              danger
+              onClick={handleLogout}
+              className="
+                !mb-2 !flex !h-10 !w-full !items-center
+                !justify-start !rounded-lg !px-3
+                !text-red-500
+                hover:!bg-red-50
+                hover:!text-red-600
+              "
+            >
+              <LogOut size={18} />
+
+              {!collapsed && (
+                <span className="ml-2 text-sm font-medium">Logout</span>
+              )}
+            </Button>
+          </Tooltip>
+
           <Tooltip
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             placement="right"
@@ -235,21 +277,25 @@ export default function Sidebar({ setHeader }) {
               onClick={() => setCollapsed(!collapsed)}
               className="
                 !flex !h-10 !w-full !items-center
-                !justify-center !rounded-lg
+                !justify-end !rounded-lg
                 !text-slate-500
                 hover:!bg-slate-100
               "
             >
-              <ChevronLeft
-                size={18}
-                className={`transition-transform ${
-                  collapsed ? "rotate-180" : ""
-                }`}
-              />
-
-              {!collapsed && (
-                <span className="ml-2 text-sm">Collapse sidebar</span>
-              )}
+              <div className="flex items-center -space-x-2">
+                <ChevronLeft
+                  size={18}
+                  className={`transition-transform ${
+                    collapsed ? "rotate-180" : ""
+                  }`}
+                />
+                <ChevronLeft
+                  size={18}
+                  className={`transition-transform ${
+                    collapsed ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
             </Button>
           </Tooltip>
         </div>

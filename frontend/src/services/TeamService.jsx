@@ -36,8 +36,8 @@ export async function getUserProfileService() {
 
 export async function updateUserProfileService(profileData) {
   try {
-    const response = await fetch(`${serviceURL}/user/profile`, {
-      method: "PUT",
+    const response = await fetch(`${serviceURL}/users/update-profile`, {
+      method: "POST",
 
       headers: {
         "Content-Type": "application/json",

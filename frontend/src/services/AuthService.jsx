@@ -65,3 +65,27 @@ export async function userSignInService(userData) {
     };
   }
 }
+
+export async function authMeService() {
+  const response = await fetch(`${serviceURL}/auth/me`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return await response.json();
+}
+
+export async function logoutService() {
+  const response = await fetch(`${serviceURL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  return await response.json();
+}

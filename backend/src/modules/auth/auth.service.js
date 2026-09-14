@@ -80,8 +80,33 @@ const forgetPassword = async (data) => {
   await sendResetEmail(user.email, resetToken);
 };
 
+const getAuthUser = async (userID) => {
+  const user = await userModel.findById(userID);
+  console.log("Retrieved user:", user); 
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  if (!user.isActive) {
+    throw new AppError(
+      "Your account is inactive. Please contact an administrator.",
+      403
+    );
+  }
+
+  return {
+    userID: user.userID,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role,
+  };
+};
+
 module.exports = {
   registerUser,
   loginUser,
   forgetPassword,
+  getAuthUser,
 };
+

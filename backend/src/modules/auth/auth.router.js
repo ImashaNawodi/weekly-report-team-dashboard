@@ -9,4 +9,5 @@ router.post("/register",validate(registerSchema),authController.registerControll
 router.post("/login",validate(loginSchema),authController.loginController);
 router.post("/forget-pw",validate(passwordResetSchema),authController.forgetPasswordController);
 router.post("/logout",authenticate,authController.logoutController);
+router.get("/me",authenticate,authController.authMeController);
 module.exports = router;
