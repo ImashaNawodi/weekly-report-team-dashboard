@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -14,7 +14,7 @@ import {
   LogOut,
 } from "lucide-react";
 
-import { Layout, Menu, Button, Badge, Tooltip, message } from "antd";
+import { Layout, Menu, Button, Badge, Tooltip, notification } from "antd";
 
 import { AuthContext } from "../context/AuthContext";
 import { logoutService } from "../services/AuthService";
@@ -26,31 +26,37 @@ const mainNav = [
     key: "dashboard",
     label: "Dashboard",
     icon: <LayoutDashboard size={18} />,
+    roles: ["MANAGER"],
   },
   {
     key: "managerDashboard",
     label: "Manager Dashboard",
     icon: <LayoutDashboard size={18} />,
+    roles: ["MANAGER"],
   },
   {
     key: "projects",
     label: "Projects",
     icon: <FolderKanban size={18} />,
+    roles: ["MANAGER"],
   },
   {
     key: "team",
     label: "Team Members",
     icon: <Users size={18} />,
+    roles: ["ADMIN"],
   },
   {
     key: "reports",
     label: "Weekly Reports",
     icon: <FileText size={18} />,
+    roles: ["TEAM_MEMBER"],
   },
   {
     key: "analytics",
     label: "Analytics",
     icon: <BarChart3 size={18} />,
+    roles: ["MANAGER"],
   },
 ];
 
@@ -59,11 +65,13 @@ const bottomNav = [
     key: "settings",
     label: "Settings",
     icon: <Settings size={18} />,
+    roles: ["MANAGER", "TEAM_MEMBER","ADMIN"],
   },
   {
     key: "help",
     label: "Help & Support",
     icon: <HelpCircle size={18} />,
+    roles: ["MANAGER", "TEAM_MEMBER","ADMIN"],
   },
 ];
 
@@ -106,10 +114,20 @@ export default function Sidebar({ setHeader }) {
   const [collapsed, setCollapsed] = useState(false);
   const [selectedKey, setSelectedKey] = useState("dashboard");
 
-  const { setUser } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const menuItems = mainNav.map((item) => ({
+  const role = user?.role;
+
+  const filteredMainNav = useMemo(() => {
+    return mainNav.filter((item) => item.roles.includes(role));
+  }, [role]);
+
+  const filteredBottomNav = useMemo(() => {
+    return bottomNav.filter((item) => item.roles.includes(role));
+  }, [role]);
+
+  const menuItems = filteredMainNav.map((item) => ({
     key: item.key,
     icon: item.icon,
     label: (
@@ -131,13 +149,21 @@ export default function Sidebar({ setHeader }) {
     ),
   }));
 
-  const bottomMenuItems = bottomNav.map((item) => ({
+  const bottomMenuItems = filteredBottomNav.map((item) => ({
     key: item.key,
     icon: item.icon,
     label: item.label,
   }));
 
   const handleMenuClick = ({ key }) => {
+    const allowedItem = [...filteredMainNav, ...filteredBottomNav].find(
+      (item) => item.key === key
+    );
+
+    if (!allowedItem) {
+      return;
+    }
+
     setSelectedKey(key);
     setHeader(pageHeaders[key]);
     navigate(`/manager-home/${key}`);
@@ -149,14 +175,26 @@ export default function Sidebar({ setHeader }) {
 
       if (response.success) {
         setUser(null);
-        message.success("Logged out successfully");
+
+        notification.success({
+          message: "Logged out successfully",
+          placement: "bottomRight",
+        });
+
         navigate("/login", { replace: true });
       } else {
-        message.error(response.message || "Logout failed");
+        notification.error({
+          message: response.message || "Logout failed",
+          placement: "bottomRight",
+        });
       }
     } catch (error) {
       console.error("LOGOUT ERROR:", error);
-      message.error("Unable to logout");
+
+      notification.error({
+        message: "Unable to logout",
+        placement: "bottomRight",
+      });
     }
   };
 
@@ -220,7 +258,7 @@ export default function Sidebar({ setHeader }) {
             "
           />
 
-          {!collapsed && (
+          {!collapsed && filteredBottomNav.length > 0 && (
             <div className="mb-2 mt-7 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Other
             </div>

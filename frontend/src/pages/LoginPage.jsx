@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   Mail,
   Lock,
@@ -25,6 +25,7 @@ import WorkPulseLogo from "../components/WorkPlusLogo";
 import { userSignInService } from "../services/AuthService";
 import { emailFieldValidation } from "../helpers/EmailValidation";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const { Text } = Typography;
 
@@ -33,38 +34,58 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
+  const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (values) => {
-    try {
-      setLoading(true);
-      const response = await userSignInService(values);
-      if (response.success) {
-        notification.success({
-          message: "Login Successful",
-          placement: "bottomRight",
-        });
+  try {
+    setLoading(true);
 
-        navigate("/manager-home/dashboard");
-      } else {
+    const response = await userSignInService(values);
+    console.log("Login response:", response);
+
+    if (response.success) {
+      notification.success({
+        message: "Login Successful",
+        placement: "bottomRight",
+      });
+
+      const role = response.user?.role;
+      console.log("User role:", role);
+  setUser(response.user);
+
+      if (role === "MANAGER") {
+        navigate("/manager-home/dashboard", { replace: true });
+      } else if (role === "ADMIN") {
+       
+        navigate("/manager-home/team", { replace: true });
+      }
+      else if (role === "TEAM_MEMBER") {
+       
+        navigate("/manager-home/reports", { replace: true });
+      }
+       else {
         notification.error({
-          message: "Login Failed",
-          description: response.message || "Invalid email or password.",
+          message: "Invalid user role",
           placement: "bottomRight",
         });
       }
-    } catch (error) {
-      console.error("Login error:", error);
-
+    } else {
       notification.error({
-        message: "Login Error",
-        description:
-          error?.message || "Something went wrong. Please try again.",
+        message: response.message || "Invalid email or password.",
         placement: "bottomRight",
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Login error:", error);
+
+    notification.error({
+      message: error?.message || "Something went wrong. Please try again.",
+      placement: "bottomRight",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="flex min-h-screen bg-white">

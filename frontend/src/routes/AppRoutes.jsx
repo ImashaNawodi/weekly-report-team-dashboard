@@ -22,22 +22,23 @@ const AppRoutes = () => {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/check-user" element={<CheckUser />} />
       <Route path="/forget-pw" element={<ResetPasswordPage />} />
+
       <Route path="/manager-home" element={<ManagerHome />}>
-        <Route index element={<Navigate to="dashboard" replace />} />
 
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="settings" element={<SettingsPage />} />
 
-        <Route
-          element={<RoleRoute allowedRoles={["MANAGER", "TEAM_MEMBER"]} />}
-        >
+        <Route element={<RoleRoute allowedRoles={["MANAGER"]} />}>
           <Route path="projects" element={<ProjectDashboard />} />
-          <Route path="reports" element={<ReportDashboard />} />
+          <Route path="managerDashboard" element={<ManagerDashboard />} />
         </Route>
 
-        <Route element={<RoleRoute allowedRoles={["MANAGER"]} />}>
+        <Route element={<RoleRoute allowedRoles={["TEAM_MEMBER"]} />}>
+          <Route path="reports" element={<ReportDashboard />} />
+        </Route>
+        
+        <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
           <Route path="team" element={<TeamDashboard />} />
-          <Route path="managerDashboard" element={<ManagerDashboard />} />
         </Route>
 
         <Route path="help" element={<HealthAndSupport />} />
