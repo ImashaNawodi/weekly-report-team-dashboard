@@ -32,7 +32,7 @@ app.use("/projects", projectRoute);
 app.use("/reports",reportRoute);
 app.use("/dashboard", dashboardRoute);
   
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
   res.send("Welcome to the Weekly Report Team Dashboard Backend");
 });
 
