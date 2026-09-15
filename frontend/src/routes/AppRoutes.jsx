@@ -1,4 +1,4 @@
-import { Routes, Route} from "react-router-dom";
+import { Navigate, Routes, Route } from "react-router-dom";
 
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
@@ -19,10 +19,13 @@ import WeeklyReport from "../pages/WeeklyReport";
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<Navigate to="/register" replace />} />
+
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/check-user" element={<CheckUser />} />
       <Route path="/forget-pw" element={<ResetPasswordPage />} />
+
       <Route path="/manager-home" element={<ManagerHome />}>
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="settings" element={<SettingsPage />} />
@@ -43,7 +46,8 @@ const AppRoutes = () => {
 
         <Route path="help" element={<HealthAndSupport />} />
       </Route>
-       <Route path="*" element={<NotFoundPage />} />
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
