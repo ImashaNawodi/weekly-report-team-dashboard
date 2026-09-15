@@ -38,6 +38,7 @@ import {
 
 import ReportModal from "../components/ReportModal";
 import ReportRow from "../components/ReportRow";
+import { useNavigate } from "react-router-dom";
 
 const PAGE_SIZE = 8;
 
@@ -53,7 +54,7 @@ export default function ReportDashboard() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
-
+  const navigate = useNavigate();
   useEffect(() => {
     fetchReports();
   }, []);
@@ -79,16 +80,21 @@ export default function ReportDashboard() {
     }
   };
 
-  const handleCreateReport = () => {
+  /*  const handleCreateReport = () => {
     setEditingReport(null);
     setReportModalOpen(true);
-  };
+  }; */
 
-  const handleEditReport = (report) => {
+  /* const handleEditReport = (report) => {
     setEditingReport(report);
     setReportModalOpen(true);
-  };
+  }; */
+  const handleCreateReport = () => {
+    sessionStorage.removeItem("editingReport");
+    sessionStorage.removeItem("editReportData");
 
+    navigate("/manager-home/reportForm");
+  };
   const handleViewReport = (report) => {
     setViewReport(report);
     setDrawerOpen(true);
@@ -423,6 +429,12 @@ export default function ReportDashboard() {
     },
   ];
 
+  const handleEditReport = (report) => {
+    sessionStorage.setItem("editingReport", "true");
+    sessionStorage.setItem("editReportData", JSON.stringify(report));
+
+    navigate("/manager-home/reportForm");
+  };
   const hasActiveFilters =
     searchQuery !== "" || statusFilter !== "all" || projectFilter !== "all";
 

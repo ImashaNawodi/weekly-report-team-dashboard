@@ -14,6 +14,7 @@ import NotFoundPage from "../pages/NotFoundPage";
 import HealthAndSupport from "../pages/HealthAndSupportPage";
 import CheckUser from "../pages/CheckUser";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
+import WeeklyReport from "../pages/WeeklyReport";
 
 const AppRoutes = () => {
   return (
@@ -22,9 +23,7 @@ const AppRoutes = () => {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/check-user" element={<CheckUser />} />
       <Route path="/forget-pw" element={<ResetPasswordPage />} />
-
       <Route path="/manager-home" element={<ManagerHome />}>
-
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="settings" element={<SettingsPage />} />
 
@@ -35,8 +34,9 @@ const AppRoutes = () => {
 
         <Route element={<RoleRoute allowedRoles={["TEAM_MEMBER"]} />}>
           <Route path="reports" element={<ReportDashboard />} />
+          <Route path="reportForm" element={<WeeklyReport />} />
         </Route>
-        
+
         <Route element={<RoleRoute allowedRoles={["ADMIN"]} />}>
           <Route path="team" element={<TeamDashboard />} />
         </Route>

@@ -1,5 +1,148 @@
 const mongoose = require("mongoose");
 
+const taskSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Medium",
+    },
+
+    plannedPct: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+
+    actualPct: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+
+    status: {
+      type: String,
+      enum: ["Not Started", "In Progress", "Completed", "Blocked"],
+      default: "Not Started",
+    },
+
+    plannedTime: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+
+    timeSpent: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+
+    output: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+  },
+  {
+    _id: true,
+  },
+);
+
+const plannedTaskSchema = new mongoose.Schema(
+  {
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High", "Critical"],
+      default: "Medium",
+    },
+
+    expectedOutcome: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+  },
+  {
+    _id: true,
+  },
+);
+
+const blockerSchema = new mongoose.Schema(
+  {
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    severity: {
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Medium",
+    },
+
+    isKeyIssue: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    _id: true,
+  },
+);
+
+const achievementSchema = new mongoose.Schema(
+  {
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    isKeyAchievement: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    _id: true,
+  },
+);
+
+const hoursEntrySchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    hours: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const reportVersionSchema = new mongoose.Schema(
   {
     versionNumber: {
@@ -18,23 +161,46 @@ const reportVersionSchema = new mongoose.Schema(
       required: true,
     },
 
-    workCompleted: {
-      type: String,
-      required: true,
+    tasks: {
+      type: [taskSchema],
+      default: [],
     },
 
-    plannedWork: {
-      type: String,
-      required: true,
+    plannedTasks: {
+      type: [plannedTaskSchema],
+      default: [],
     },
 
     blockers: {
+      type: [blockerSchema],
+      default: [],
+    },
+
+    achievements: {
+      type: [achievementSchema],
+      default: [],
+    },
+
+    hours: {
+      type: [hoursEntrySchema],
+      default: [],
+    },
+
+    notes: {
       type: String,
+      trim: true,
+      default: "",
+    },
+
+    links: {
+      type: String,
+      trim: true,
       default: "",
     },
 
     status: {
       type: String,
+      enum: ["SUBMITTED", "APPROVED", "NEEDS_CORRECTION"],
       required: true,
     },
   },
@@ -63,9 +229,11 @@ const reportSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
-     weekNumber: {
+
+    weekNumber: {
       type: Number,
-     
+      required: true,
+      min: 1,
     },
 
     weekStart: {
@@ -78,19 +246,38 @@ const reportSchema = new mongoose.Schema(
       required: true,
     },
 
-    workCompleted: {
-      type: String,
-      required: true,
-      trim: true,
+    tasks: {
+      type: [taskSchema],
+      default: [],
     },
 
-    plannedWork: {
-      type: String,
-      required: true,
-      trim: true,
+    plannedTasks: {
+      type: [plannedTaskSchema],
+      default: [],
     },
 
     blockers: {
+      type: [blockerSchema],
+      default: [],
+    },
+
+    achievements: {
+      type: [achievementSchema],
+      default: [],
+    },
+
+    hours: {
+      type: [hoursEntrySchema],
+      default: [],
+    },
+
+    notes: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    links: {
       type: String,
       trim: true,
       default: "",
@@ -134,14 +321,24 @@ const reportSchema = new mongoose.Schema(
   },
 );
 
+reportSchema.index(
+  {
+    user: 1,
+    weekStart: 1,
+  },
+  {
+    unique: true,
+  },
+);
+
 reportSchema.index({
   user: 1,
-  weekStart: 1,
+  weekStart: -1,
 });
 
 reportSchema.index({
   project: 1,
-  weekStart: 1,
+  weekStart: -1,
 });
 
 reportSchema.index({

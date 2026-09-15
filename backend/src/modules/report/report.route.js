@@ -9,7 +9,7 @@ router.post(
   "/create-report",
   authenticate,
   authorize("TEAM_MEMBER"),
-  validate(createReportSchema),
+  //validate(createReportSchema),
   reportController.createReportController,
 );
 router.get(
@@ -30,7 +30,7 @@ router.post(
   "/update-report",
   authenticate,
   authorize("TEAM_MEMBER"),
-  validate(updateReportSchema),
+  //validate(updateReportSchema),
   reportController.updateReportController
 );
 

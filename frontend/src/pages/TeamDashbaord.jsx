@@ -28,7 +28,7 @@ import {
   Avatar,
   Progress,
   Tooltip,
-  notification
+  notification,
 } from "antd";
 
 import {
@@ -59,15 +59,15 @@ export default function TeamDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const { getAuthUser } = useContext(AuthContext);
-  
-  useEffect(() => {
-  console.log("TEAM DASHBOARD MOUNTED");
-  console.log("GET AUTH USER FUNCTION:", getAuthUser);
 
-  fetchAllUsers();
-  handleViewAllProjects();
-  getAuthUser();
-}, []);
+  useEffect(() => {
+    console.log("TEAM DASHBOARD MOUNTED");
+    console.log("GET AUTH USER FUNCTION:", getAuthUser);
+
+    fetchAllUsers();
+    handleViewAllProjects();
+    getAuthUser();
+  }, []);
 
   const fetchAllUsers = async () => {
     try {
@@ -183,30 +183,30 @@ export default function TeamDashboard() {
   };
 
   const updateUserStatus = async (userAccountID, isActive) => {
-  try {
-    const response = await updateUserStatusService(userAccountID, isActive);
+    try {
+      const response = await updateUserStatusService(userAccountID, isActive);
 
-    if (!response.success) {
-      notification.error({
-        message: response.message || "Failed to update user status",
+      if (!response.success) {
+        notification.error({
+          message: response.message || "Failed to update user status",
+          placement: "bottomRight",
+        });
+        return;
+      }
+
+      notification.success({
+        message: `User ${isActive ? "activated" : "deactivated"} successfully`,
         placement: "bottomRight",
       });
-      return;
+
+      return response;
+    } catch (error) {
+      notification.error({
+        message: error.message || "Failed to update user status",
+        placement: "bottomRight",
+      });
     }
-
-    notification.success({
-      message: `User ${isActive ? "activated" : "deactivated"} successfully`,
-      placement: "bottomRight",
-    });
-
-    return response;
-  } catch (error) {
-    notification.error({
-      message: error.message || "Failed to update user status",
-      placement: "bottomRight",
-    });
-  }
-};
+  };
 
   const handleToggleStatus = async (member) => {
     setTogglingId(member._id);
@@ -354,53 +354,6 @@ export default function TeamDashboard() {
               </span>
             </Tooltip>
           </div>
-        );
-      },
-    },
-
-    {
-      title: "REPORTS THIS WEEK",
-      key: "reports",
-      width: 160,
-      render: (_, member) => {
-        const reports = member.reports_this_week || 0;
-
-        if (reports === 0) {
-          return <span className="text-sm text-slate-300">0</span>;
-        }
-
-        return (
-          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-emerald-50 px-2 text-xs font-bold text-emerald-700">
-            {reports}
-          </span>
-        );
-      },
-    },
-
-    {
-      title: "APPROVAL RATE",
-      key: "approvalRate",
-      width: 170,
-      render: (_, member) => {
-        const totalReports = member.total_reports || 0;
-
-        const rate =
-          Number(member.approval_rate ?? member.approvalRate ?? 0) || 0;
-
-        if (totalReports === 0) {
-          return <span className="text-sm text-slate-300">—</span>;
-        }
-
-        return (
-          <Progress
-            percent={rate}
-            size="small"
-            style={{
-              width: 110,
-              margin: 0,
-            }}
-            format={(percent) => `${percent}%`}
-          />
         );
       },
     },

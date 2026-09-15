@@ -38,7 +38,7 @@ router.post(
 router.get(
   "/all-users",
   authenticate,
-  authorize("ADMIN","MANAGER"),
+  authorize("ADMIN","MANAGER","TEAM_MEMBER"),
   userController.getAllUsersController,
 );
 module.exports = router;
