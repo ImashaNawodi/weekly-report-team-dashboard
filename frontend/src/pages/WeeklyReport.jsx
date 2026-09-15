@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { message } from "antd";
-
+import { useNavigate } from "react-router-dom";
 import ReportMetaBar from "../components/ReportMetaBar";
 import ActionBar from "../components/ActionBar";
 import PreviewModal from "../components/PreviewModal";
@@ -13,6 +13,7 @@ import AchievementsSection from "../components/sections/AchievementSection";
 import HoursWorkedSection from "../components/sections/HoursWorkedSection";
 import NotesSection from "../components/sections/NotesSection";
 
+
 import { HOUR_TYPES } from "../helpers/Constants";
 
 import {
@@ -21,85 +22,66 @@ import {
 } from "../services/ReportService";
 
 import { getUserProjectsService } from "../services/ProjectService";
-import { useNavigate } from "react-router-dom";
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 const getWeekStart = (date = new Date()) => {
-  const result = new Date(date);
+  const currentDate = new Date(date);
+  const day = currentDate.getDay();
 
-  result.setHours(0, 0, 0, 0);
-
-  const day = result.getDay();
   const diff = day === 0 ? -6 : 1 - day;
 
-  result.setDate(result.getDate() + diff);
+  currentDate.setDate(currentDate.getDate() + diff);
+  currentDate.setHours(0, 0, 0, 0);
 
-  return result;
+  return currentDate;
 };
 
 const dateToStr = (date) => {
-  if (!date) return "";
+  const d = new Date(date);
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-const getISOWeekNumber = (dateString) => {
-  if (!dateString) return "";
+const getISOWeekNumber = (date) => {
+  const target = new Date(date.valueOf());
 
-  const date = new Date(`${dateString}T00:00:00`);
+  const dayNr = (date.getDay() + 6) % 7;
 
-  if (Number.isNaN(date.getTime())) return "";
+  target.setDate(target.getDate() - dayNr + 3);
 
-  const tempDate = new Date(date);
+  const firstThursday = target.valueOf();
 
-  tempDate.setHours(0, 0, 0, 0);
+  target.setMonth(0, 1);
 
-  tempDate.setDate(tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7));
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+  }
 
-  const week1 = new Date(tempDate.getFullYear(), 0, 4);
-
-  return (
-    1 +
-    Math.round(
-      ((tempDate - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7,
-    )
-  );
+  return 1 + Math.ceil((firstThursday - target) / 604800000);
 };
 
 const createClientId = () => {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
 const createEmptyReport = () => {
   const weekStart = getWeekStart();
 
-  const weekEnd = new Date(weekStart);
-
-  weekEnd.setDate(weekStart.getDate() + 6);
-
   return {
-    id: null,
-
     weekStart: dateToStr(weekStart),
 
-    weekEnd: dateToStr(weekEnd),
-
-    weekNumber: getISOWeekNumber(dateToStr(weekStart)),
-
-    status: "DRAFT",
-
-    lastSaved: null,
+    weekNumber: getISOWeekNumber(weekStart),
 
     project: "",
 
-    tasks: [],
+    tasksCompleted: [],
 
     plannedTasks: [],
 
@@ -115,113 +97,118 @@ const createEmptyReport = () => {
 
     notes: "",
 
-    links: "",
+    links: [],
+
+    status: "Draft",
   };
 };
 
 const getDisplayStatus = (status) => {
-  switch (status) {
-    case "DRAFT":
+  if (!status) {
+    return "Draft";
+  }
+
+  const normalizedStatus = String(status).toLowerCase();
+
+  switch (normalizedStatus) {
+    case "draft":
       return "Draft";
 
-    case "SUBMITTED":
+    case "submitted":
       return "Submitted";
 
-    case "NEEDS_CORRECTION":
-      return "Needs Correction";
-
-    case "APPROVED":
+    case "approved":
       return "Approved";
 
+    case "rejected":
+      return "Rejected";
+
+    case "correction_requested":
+      return "Correction Requested";
+
+    case "correction requested":
+      return "Correction Requested";
+
     default:
-      return status || "Draft";
+      return status;
   }
 };
 
-const WeeklyReport = () => {
-  const isEditMode = sessionStorage.getItem("editingReport") === "true";
+/* =========================================================
+   COMPONENT
+========================================================= */
 
-  const editReportData = (() => {
-    if (!isEditMode) {
-      return null;
-    }
+export default function WeeklyReport() {
+  const navigate = useNavigate();
 
+  /* =======================================================
+     SESSION STORAGE
+  ======================================================= */
+
+  const editingReport =
+    sessionStorage.getItem("editingReport") === "true";
+
+  const storedEditReport = sessionStorage.getItem("editReportData");
+
+  let editReportData = null;
+
+  if (storedEditReport) {
     try {
-      const data = sessionStorage.getItem("editReportData");
-
-      return data ? JSON.parse(data) : null;
+      editReportData = JSON.parse(storedEditReport);
     } catch (error) {
       console.error("Failed to parse edit report data:", error);
-
-      return null;
     }
-  })();
+  }
 
-  const [report, setReport] = useState(() => {
-    if (!isEditMode || !editReportData) {
-      return createEmptyReport();
+  /* =======================================================
+     INITIAL REPORT
+  ======================================================= */
+
+  const getInitialReport = () => {
+    if (editingReport && editReportData) {
+      const emptyReport = createEmptyReport();
+
+      return {
+        ...emptyReport,
+
+        ...editReportData,
+
+        tasksCompleted: Array.isArray(editReportData.tasksCompleted)
+          ? editReportData.tasksCompleted
+          : [],
+
+        plannedTasks: Array.isArray(editReportData.plannedTasks)
+          ? editReportData.plannedTasks
+          : [],
+
+        blockers: Array.isArray(editReportData.blockers)
+          ? editReportData.blockers
+          : [],
+
+        achievements: Array.isArray(editReportData.achievements)
+          ? editReportData.achievements
+          : [],
+
+        hours: Array.isArray(editReportData.hours)
+          ? editReportData.hours
+          : emptyReport.hours,
+
+        links: Array.isArray(editReportData.links)
+          ? editReportData.links
+          : [],
+
+        notes: editReportData.notes || "",
+      };
     }
 
-    const existingProject = editReportData.project;
+    return createEmptyReport();
+  };
 
-    const projectId =
-      typeof existingProject === "object"
-        ? existingProject?._id ||
-          existingProject?.id ||
-          existingProject?.projectID ||
-          ""
-        : existingProject || "";
+  /* =======================================================
+     STATE
+  ======================================================= */
 
-    return {
-      ...createEmptyReport(),
-
-      id: editReportData._id || editReportData.id || null,
-
-      weekStart: editReportData.weekStart
-        ? dateToStr(new Date(editReportData.weekStart))
-        : "",
-
-      weekEnd: editReportData.weekEnd
-        ? dateToStr(new Date(editReportData.weekEnd))
-        : "",
-
-      weekNumber:
-        editReportData.weekNumber || getISOWeekNumber(editReportData.weekStart),
-
-      status: editReportData.status || "DRAFT",
-
-      lastSaved: editReportData.lastSaved || null,
-
-      project: projectId,
-
-      tasks: editReportData.tasks || [],
-
-      plannedTasks: editReportData.plannedTasks || [],
-
-      blockers: editReportData.blockers || [],
-
-      achievements: editReportData.achievements || [],
-
-      hours:
-        editReportData.hours?.length > 0
-          ? editReportData.hours.map((item) => ({
-              ...item,
-
-              id: item.id || item._id || createClientId(),
-            }))
-          : HOUR_TYPES.map((type) => ({
-              id: createClientId(),
-              type,
-              hours: 0,
-            })),
-
-      notes: editReportData.notes || "",
-
-      links: editReportData.links || "",
-    };
-  });
-
-  const navigate = useNavigate();
+  const [report, setReport] = useState(getInitialReport);
 
   const [assignedProject, setAssignedProject] = useState(null);
 
@@ -231,334 +218,282 @@ const WeeklyReport = () => {
 
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    const fetchUserProject = async () => {
-      try {
-        setProjectLoading(true);
+  /* =======================================================
+     GET USER PROJECT
+  ======================================================= */
 
-        const response = await getUserProjectsService();
+  const getUserProject = useCallback(async () => {
+    try {
+      setProjectLoading(true);
 
-        if (!response?.success) {
-          throw new Error(response?.message || "Failed to load your project");
-        }
+      const response = await getUserProjectsService();
 
-        const projects = Array.isArray(response.data)
-          ? response.data
-          : response.data?.projects || response.projects || [];
+      const projects = Array.isArray(response)
+        ? response
+        : response?.projects || response?.data || [];
 
-        if (projects.length === 0) {
-          throw new Error("You are not assigned to a project.");
-        }
+      if (projects.length > 0) {
+        const project = projects[0];
 
-        if (projects.length > 1) {
-          console.warn(
-            "User has multiple projects. Only the first project will be used.",
-          );
-        }
-
-        const userProject = projects[0];
-
-        const projectId =
-          userProject?._id || userProject?.id || userProject?.projectID;
-
-        if (!projectId) {
-          throw new Error("Project ID is missing.");
-        }
-
-        setAssignedProject(userProject);
+        setAssignedProject(project);
 
         setReport((current) => ({
           ...current,
 
-          project: current.project || projectId,
+          project:
+            current.project ||
+            project._id ||
+            project.id ||
+            project.projectID ||
+            project.name ||
+            "",
         }));
-      } catch (error) {
-        console.error("Fetch user project error:", error);
-
-        setAssignedProject(null);
-
-        message.error(error?.message || "Failed to load your project");
-      } finally {
-        setProjectLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to load assigned project:", error);
 
-    fetchUserProject();
+      message.error("Failed to load assigned project");
+    } finally {
+      setProjectLoading(false);
+    }
   }, []);
 
-  const showToast = useCallback((type, content) => {
-    message[type](content);
-  }, []);
+  /* =======================================================
+     LOAD PROJECT
+  ======================================================= */
 
-  const createTask = useCallback(() => {
-    return {
-      id: createClientId(),
+  useEffect(() => {
+    getUserProject();
+  }, [getUserProject]);
 
-      name: "",
+  /* =======================================================
+     PROJECT CHANGE
+  ======================================================= */
 
-      priority: "Medium",
-
-      plannedPct: 0,
-
-      actualPct: 0,
-
-      status: "Not Started",
-
-      plannedTime: 0,
-
-      timeSpent: 0,
-
-      output: "",
-    };
-  }, []);
-
-  const handleAddTask = useCallback(() => {
+  const handleProjectChange = useCallback((value) => {
     setReport((current) => ({
       ...current,
-
-      tasks: [...(current.tasks || []), createTask()],
-    }));
-  }, [createTask]);
-
-  const handleEditTask = useCallback((taskId) => {
-    console.log("Edit task:", taskId);
-  }, []);
-
-  const handleDeleteTask = useCallback((taskId) => {
-    setReport((current) => ({
-      ...current,
-
-      tasks: (current.tasks || []).filter((task) => task.id !== taskId),
+      project: value,
     }));
   }, []);
 
-  const handleTaskFieldChange = useCallback((taskId, field, value) => {
+  /* =======================================================
+     TASKS COMPLETED
+  ======================================================= */
+
+  const handleTasksCompletedChange = useCallback((tasks) => {
     setReport((current) => ({
       ...current,
-
-      tasks: (current.tasks || []).map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              [field]: value,
-            }
-          : task,
-      ),
+      tasksCompleted: Array.isArray(tasks) ? tasks : [],
     }));
   }, []);
 
-  const handlePlannedTasksChange = useCallback((plannedTasks) => {
+  /* =======================================================
+     PLANNED TASKS
+  ======================================================= */
+
+  const handlePlannedTasksChange = useCallback((tasks) => {
     setReport((current) => ({
       ...current,
-
-      plannedTasks,
+      plannedTasks: Array.isArray(tasks) ? tasks : [],
     }));
   }, []);
 
-  const handleAddBlocker = useCallback(() => {
-    const newBlocker = {
-      id: createClientId(),
+  /* =======================================================
+     BLOCKERS
+  ======================================================= */
 
-      description: "",
-
-      severity: "Medium",
-
-      isKeyIssue: false,
-    };
-
+  const handleBlockersChange = useCallback((blockers) => {
     setReport((current) => ({
       ...current,
-
-      blockers: [...(current.blockers || []), newBlocker],
+      blockers: Array.isArray(blockers) ? blockers : [],
     }));
   }, []);
 
-  const handleDeleteBlocker = useCallback((blockerId) => {
+  /* =======================================================
+     ACHIEVEMENTS
+  ======================================================= */
+
+  const handleAchievementsChange = useCallback((achievements) => {
     setReport((current) => ({
       ...current,
-
-      blockers: (current.blockers || []).filter(
-        (blocker) => blocker.id !== blockerId,
-      ),
+      achievements: Array.isArray(achievements)
+        ? achievements
+        : [],
     }));
   }, []);
 
-  const handleBlockerFieldChange = useCallback((blockerId, field, value) => {
-    setReport((current) => ({
-      ...current,
+  /* =======================================================
+     HOURS WORKED
+     
+     IMPORTANT:
+     HoursWorkedSection calls:
+     
+       onChange(type, value)
+     
+     Therefore we must update the matching item inside
+     report.hours instead of replacing report.hours.
+  ======================================================= */
 
-      blockers: (current.blockers || []).map((blocker) =>
-        blocker.id === blockerId
-          ? {
-              ...blocker,
-              [field]: value,
-            }
-          : blocker,
-      ),
-    }));
-  }, []);
-
-  const handleKeyIssueChange = useCallback((blockerId) => {
-    setReport((current) => ({
-      ...current,
-
-      blockers: (current.blockers || []).map((blocker) => ({
-        ...blocker,
-
-        isKeyIssue: blocker.id === blockerId,
-      })),
-    }));
-  }, []);
-
-  const handleAddAchievement = useCallback(() => {
-    const newAchievement = {
-      id: createClientId(),
-
-      description: "",
-
-      isKeyAchievement: false,
-    };
-
-    setReport((current) => ({
-      ...current,
-
-      achievements: [...(current.achievements || []), newAchievement],
-    }));
-  }, []);
-
-  const handleDeleteAchievement = useCallback((achievementId) => {
-    setReport((current) => ({
-      ...current,
-
-      achievements: (current.achievements || []).filter(
-        (achievement) => achievement.id !== achievementId,
-      ),
-    }));
-  }, []);
-
-  const handleAchievementFieldChange = useCallback(
-    (achievementId, field, value) => {
-      setReport((current) => ({
-        ...current,
-
-        achievements: (current.achievements || []).map((achievement) =>
-          achievement.id === achievementId
-            ? {
-                ...achievement,
-                [field]: value,
-              }
-            : achievement,
-        ),
-      }));
-    },
-    [],
-  );
-
-  const handleKeyAchievementChange = useCallback((achievementId) => {
-    setReport((current) => ({
-      ...current,
-
-      achievements: (current.achievements || []).map((achievement) => ({
-        ...achievement,
-
-        isKeyAchievement: achievement.id === achievementId,
-      })),
-    }));
-  }, []);
-
-  const handleHoursChange = useCallback((hours) => {
-    setReport((current) => ({
-      ...current,
-
-      hours,
-    }));
-  }, []);
-
-  const handleNotesChange = useCallback((notes) => {
-    setReport((current) => ({
-      ...current,
-
-      notes,
-    }));
-  }, []);
-
-  const handleLinksChange = useCallback((links) => {
-    setReport((current) => ({
-      ...current,
-
-      links,
-    }));
-  }, []);
-
-  const handleReportMetaChange = useCallback((updates) => {
+  const handleHoursChange = useCallback((type, value) => {
     setReport((current) => {
-      const next = typeof updates === "function" ? updates(current) : updates;
+      const currentHours = Array.isArray(current.hours)
+        ? current.hours
+        : [];
+
+      const existingEntry = currentHours.find(
+        (item) => item?.type === type,
+      );
+
+      if (existingEntry) {
+        return {
+          ...current,
+
+          hours: currentHours.map((item) =>
+            item?.type === type
+              ? {
+                  ...item,
+                  hours: Number(value) || 0,
+                }
+              : item,
+          ),
+        };
+      }
 
       return {
         ...current,
 
-        ...next,
-
-        // Project is read-only
-        project: current.project,
+        hours: [
+          ...currentHours,
+          {
+            id: createClientId(),
+            type,
+            hours: Number(value) || 0,
+          },
+        ],
       };
     });
   }, []);
 
+  /* =======================================================
+     NOTES
+  ======================================================= */
+
+  const handleNotesChange = useCallback((notes) => {
+    setReport((current) => ({
+      ...current,
+      notes: notes || "",
+    }));
+  }, []);
+
+  /* =======================================================
+     LINKS
+  ======================================================= */
+
+  const handleLinksChange = useCallback((links) => {
+    setReport((current) => ({
+      ...current,
+      links: Array.isArray(links) ? links : [],
+    }));
+  }, []);
+
+  /* =======================================================
+     REPORT META CHANGE
+  ======================================================= */
+
+  const handleMetaChange = useCallback((updates) => {
+    setReport((current) => ({
+      ...current,
+      ...updates,
+    }));
+  }, []);
+
+  /* =======================================================
+     BUILD PAYLOAD
+  ======================================================= */
+
   const buildReportPayload = useCallback(() => {
     return {
-      project: report.project,
+      ...report,
 
-      name: report.project?.name,
-
-      weekNumber: report.weekNumber,
+      project: report.project || "",
 
       weekStart: report.weekStart,
 
-      weekEnd: report.weekEnd,
+      weekNumber: report.weekNumber,
 
-      tasks: (report.tasks || []).map((task) => ({
-        ...task,
+      tasksCompleted: Array.isArray(report.tasksCompleted)
+        ? report.tasksCompleted
+        : [],
 
-        plannedPct: Number(task.plannedPct) || 0,
+      plannedTasks: Array.isArray(report.plannedTasks)
+        ? report.plannedTasks
+        : [],
 
-        actualPct: Number(task.actualPct) || 0,
+      blockers: Array.isArray(report.blockers)
+        ? report.blockers
+        : [],
 
-        plannedTime: Number(task.plannedTime) || 0,
+      achievements: Array.isArray(report.achievements)
+        ? report.achievements
+        : [],
 
-        timeSpent: Number(task.timeSpent) || 0,
-      })),
+      /*
+       * IMPORTANT:
+       * Always make sure hours is an array before using .map()
+       */
+      hours: Array.isArray(report.hours)
+        ? report.hours.map((item) => ({
+            ...item,
 
-      plannedTasks: report.plannedTasks || [],
-
-      blockers: report.blockers || [],
-
-      achievements: report.achievements || [],
-
-      hours: (report.hours || []).map((item) => ({
-        ...item,
-
-        hours: Number(item.hours) || 0,
-      })),
+            hours: Number(item?.hours) || 0,
+          }))
+        : [],
 
       notes: report.notes || "",
 
-      links: report.links || "",
+      links: Array.isArray(report.links)
+        ? report.links
+        : [],
+
+      status: report.status || "Draft",
     };
   }, [report]);
 
-  const handleSaveDraft = useCallback(async () => {
-    const hasInvalidTask = report.tasks?.some((task) => !task.name?.trim());
+  /* =======================================================
+     VALIDATION
+  ======================================================= */
 
-    if (hasInvalidTask) {
-      message.error("Task name is required for all tasks.");
+  const validateReport = () => {
+    if (!report.project) {
+      message.error("Please select a project");
 
-      return;
+      return false;
     }
 
-    if (!report.project) {
-      showToast("error", "Project is still loading. Please wait.");
+    if (
+      Array.isArray(report.tasksCompleted) &&
+      report.tasksCompleted.some(
+        (task) =>
+          typeof task === "string" && !task.trim(),
+      )
+    ) {
+      message.error(
+        "Please enter a task name or remove the empty task.",
+      );
 
+      return false;
+    }
+
+    return true;
+  };
+
+  /* =======================================================
+     SAVE DRAFT
+  ======================================================= */
+
+  const handleSaveDraft = async () => {
+    if (!validateReport()) {
       return;
     }
 
@@ -569,136 +504,194 @@ const WeeklyReport = () => {
 
       let response;
 
-      if (isEditMode && report.id) {
-        response = await updateReportService(report.id, payload);
+      if (editingReport && editReportData?._id) {
+        response = await updateReportService(
+          editReportData._id,
+          payload,
+        );
+      } else if (editingReport && editReportData?.id) {
+        response = await updateReportService(
+          editReportData.id,
+          payload,
+        );
       } else {
         response = await createReportService(payload);
       }
 
-      if (!response?.success) {
-        throw new Error(response?.message || "Failed to save report");
-      }
-
       const savedReport =
-        response?.data?.report ||
-        response?.data ||
         response?.report ||
+        response?.data ||
         response;
-
-      const savedId = savedReport?._id || savedReport?.id || report.id;
 
       setReport((current) => ({
         ...current,
 
-        id: savedId,
+        ...(savedReport || {}),
 
-        status: savedReport?.status || current.status || "DRAFT",
-
-        lastSaved: new Date().toISOString(),
+        hours: Array.isArray(savedReport?.hours)
+          ? savedReport.hours
+          : current.hours,
       }));
 
-      sessionStorage.removeItem("editingReport");
-
-      sessionStorage.removeItem("editReportData");
-
       message.success(
-        isEditMode
-          ? "Report updated successfully."
-          : "Report created successfully and draft saved.",
+        editingReport
+          ? "Report updated successfully"
+          : "Report saved as draft successfully",
       );
+
+      sessionStorage.removeItem("editingReport");
+      sessionStorage.removeItem("editReportData");
 
       navigate("/manager-home/reports");
     } catch (error) {
       console.error("Save report error:", error);
 
-      showToast("error", error?.message || "Failed to save report.");
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to save report";
+
+      message.error(errorMessage);
     } finally {
       setIsSaving(false);
     }
-  }, [
-    report.id,
-    report.project,
-    report.tasks,
-    buildReportPayload,
-    showToast,
-    navigate,
-    isEditMode,
-  ]);
+  };
 
-  const handlePreview = useCallback(() => {
+  /* =======================================================
+     PREVIEW
+  ======================================================= */
+
+  const handlePreview = () => {
     setShowPreviewModal(true);
-  }, []);
+  };
+
+  /* =======================================================
+     CANCEL
+  ======================================================= */
+
+  const handleCancel = () => {
+    sessionStorage.removeItem("editingReport");
+    sessionStorage.removeItem("editReportData");
+
+    navigate("/manager-home/reports");
+  };
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
-    <div className="w-full p-6 space-y-6">
-      <ProjectSection project={assignedProject} loading={projectLoading} />
+    <div className="min-h-screen bg-slate-50">
+      {/* ===================================================
+          HEADER / META
+      =================================================== */}
 
       <ReportMetaBar
-        report={{
-          ...report,
-
-          status: getDisplayStatus(report.status),
-        }}
-        project={assignedProject}
-        onChange={handleReportMetaChange}
+        report={report}
+        onChange={handleMetaChange}
+        status={getDisplayStatus(report.status)}
+        editing={editingReport}
       />
 
-      <TasksCompletedSection
-        tasks={report.tasks || []}
-        onAdd={handleAddTask}
-        onEdit={handleEditTask}
-        onDelete={handleDeleteTask}
-        onFieldChange={handleTaskFieldChange}
-      />
+      {/* ===================================================
+          MAIN CONTENT
+      =================================================== */}
 
-      <PlannedTasksSection
-        plannedTasks={report.plannedTasks || []}
-        onChange={handlePlannedTasksChange}
-      />
+      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="space-y-6">
+          {/* ===============================================
+              PROJECT
+          =============================================== */}
 
-      <BlockersSection
-        blockers={report.blockers || []}
-        onAdd={handleAddBlocker}
-        onDelete={handleDeleteBlocker}
-        onFieldChange={handleBlockerFieldChange}
-        onKeyIssueChange={handleKeyIssueChange}
-      />
+          <ProjectSection
+            project={report.project}
+            assignedProject={assignedProject}
+            loading={projectLoading}
+            onChange={handleProjectChange}
+          />
 
-      <AchievementsSection
-        achievements={report.achievements || []}
-        onAdd={handleAddAchievement}
-        onDelete={handleDeleteAchievement}
-        onFieldChange={handleAchievementFieldChange}
-        onKeyAchievementChange={handleKeyAchievementChange}
-      />
+          {/* ===============================================
+              TASKS COMPLETED
+          =============================================== */}
 
-      <HoursWorkedSection
-        hours={report.hours || []}
-        onChange={handleHoursChange}
-      />
+          <TasksCompletedSection
+            tasks={report.tasksCompleted}
+            onChange={handleTasksCompletedChange}
+          />
 
-      <NotesSection
-        notes={report.notes || ""}
-        links={report.links || ""}
-        onNotesChange={handleNotesChange}
-        onLinksChange={handleLinksChange}
-      />
+          {/* ===============================================
+              PLANNED TASKS
+          =============================================== */}
+
+          <PlannedTasksSection
+            tasks={report.plannedTasks}
+            onChange={handlePlannedTasksChange}
+          />
+
+          {/* ===============================================
+              BLOCKERS
+          =============================================== */}
+
+          <BlockersSection
+            blockers={report.blockers}
+            onChange={handleBlockersChange}
+          />
+
+          {/* ===============================================
+              ACHIEVEMENTS
+          =============================================== */}
+
+          <AchievementsSection
+            achievements={report.achievements}
+            onChange={handleAchievementsChange}
+          />
+
+          {/* ===============================================
+              HOURS WORKED
+          =============================================== */}
+
+          <HoursWorkedSection
+            hours={
+              Array.isArray(report.hours)
+                ? report.hours
+                : []
+            }
+            hourTypes={HOUR_TYPES}
+            onChange={handleHoursChange}
+          />
+
+          {/* ===============================================
+              NOTES
+          =============================================== */}
+
+          <NotesSection
+            notes={report.notes}
+            onChange={handleNotesChange}
+          />
+        </div>
+      </main>
+
+      {/* ===================================================
+          ACTION BAR
+      =================================================== */}
 
       <ActionBar
-        onSaveDraft={handleSaveDraft}
+        onSave={handleSaveDraft}
         onPreview={handlePreview}
-        saving={isSaving}
-        disabled={projectLoading}
+        onCancel={handleCancel}
+        loading={isSaving}
+        isEditing={editingReport}
       />
+
+      {/* ===================================================
+          PREVIEW MODAL
+      =================================================== */}
 
       <PreviewModal
         open={showPreviewModal}
-        onClose={() => setShowPreviewModal(false)}
         report={report}
-        project={assignedProject}
+        onClose={() => setShowPreviewModal(false)}
       />
     </div>
   );
-};
-
-export default WeeklyReport;
+}
