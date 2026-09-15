@@ -1,7 +1,6 @@
 import {
   SaveOutlined,
   EyeOutlined,
-  SendOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
 

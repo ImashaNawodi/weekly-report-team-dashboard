@@ -13,7 +13,7 @@ import {
   Flag,
 } from "lucide-react";
 
-import { Drawer, Button, Tag, Typography, Divider } from "antd";
+import { Drawer, Button, Tag, Typography } from "antd";
 
 import StatusBadge from "./StatusBadge";
 

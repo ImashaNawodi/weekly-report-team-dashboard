@@ -8,7 +8,7 @@ import {
   StarOutlined,
 } from "@ant-design/icons";
 
-import { Button, Input, Radio, Tag, Tooltip, Empty } from "antd";
+import { Button, Input, Radio, Tag, Tooltip } from "antd";
 
 const { TextArea } = Input;
 
@@ -20,21 +20,6 @@ export default function BlockersSection({
   onKeyIssueChange,
   severities = ["Low", "Medium", "High", "Critical"],
 }) {
-  const getSeverityColor = (severity) => {
-    switch (severity?.toLowerCase()) {
-      case "low":
-        return "green";
-      case "medium":
-        return "gold";
-      case "high":
-        return "orange";
-      case "critical":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <SectionCard
       number={4}

@@ -1,5 +1,3 @@
-import { Card } from "antd";
-
 export default function SectionCard({
   number,
   title,

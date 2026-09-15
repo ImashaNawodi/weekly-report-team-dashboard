@@ -1,13 +1,12 @@
 import {
-
   PlusOutlined,
   DeleteOutlined,
   StarFilled,
   StarOutlined,
 } from "@ant-design/icons";
-import { Award } from 'lucide-react';
+import { Award } from "lucide-react";
 
-import { Button, Input, Radio, Tag, Empty, Tooltip } from "antd";
+import { Button, Input, Radio, Tag, Tooltip } from "antd";
 import SectionCard from "../ui/SectionsCard";
 const { TextArea } = Input;
 export default function AchievementsSection({
@@ -56,7 +55,6 @@ export default function AchievementsSection({
       ) : (
         <div className="space-y-3">
           {" "}
-        {" "}
           <div className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
             {" "}
             <StarFilled className="text-amber-500" />{" "}
@@ -67,14 +65,12 @@ export default function AchievementsSection({
               spotlight your biggest win.{" "}
             </span>{" "}
           </div>{" "}
-        {" "}
           {achievements.map((achievement, index) => (
             <div
               key={achievement.id}
               className={`rounded-lg border p-4 transition-all ${achievement.isKeyAchievement ? "border-green-300 bg-green-50/30 ring-1 ring-green-200" : "border-slate-200 hover:border-slate-300"}`}
             >
               {" "}
-             {" "}
               <div className="mb-3 flex items-center justify-between">
                 {" "}
                 <div className="flex items-center gap-2">
@@ -106,9 +102,7 @@ export default function AchievementsSection({
                   />{" "}
                 </Tooltip>{" "}
               </div>{" "}
-              {" "}
               <div className="space-y-4">
-                {" "}
                 {" "}
                 <div>
                   {" "}
@@ -132,7 +126,6 @@ export default function AchievementsSection({
                     className="!resize-none"
                   />{" "}
                 </div>{" "}
-               {" "}
                 <Radio
                   checked={achievement.isKeyAchievement}
                   onChange={() => onKeyAchievementChange(achievement.id)}
