@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 
 import {
-  PlusOutlined,
   SearchOutlined,
   FilterOutlined,
   ExclamationCircleOutlined,
@@ -26,7 +25,6 @@ import {
   Col,
   Dropdown,
   Avatar,
-  Progress,
   Tooltip,
   notification,
 } from "antd";
@@ -67,7 +65,7 @@ export default function TeamDashboard() {
     fetchAllUsers();
     handleViewAllProjects();
     getAuthUser();
-  }, []);
+  }, [getAuthUser]);
 
   const fetchAllUsers = async () => {
     try {

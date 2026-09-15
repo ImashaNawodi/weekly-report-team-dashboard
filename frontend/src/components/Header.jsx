@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell } from "lucide-react";
 import { Layout, Button, Avatar, Badge, Typography } from "antd";
 import { AuthContext } from "../context/AuthContext";
 
@@ -8,7 +8,6 @@ const { Text } = Typography;
 
 export default function Header({ title, subtitle }) {
   const { user, authLoading } = useContext(AuthContext);
-  
 
   const fullName = user ? `${user.firstName} ${user.lastName}` : "User";
 
@@ -119,7 +118,6 @@ sm:!text-xl
               {authLoading ? "" : user?.role}
             </div>
           </div>
-
         </Button>
       </div>
     </AntHeader>

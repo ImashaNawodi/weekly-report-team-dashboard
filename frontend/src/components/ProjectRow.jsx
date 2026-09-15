@@ -1,4 +1,4 @@
-import { Pencil, Trash2, Power, Eye, MoreVertical } from "lucide-react";
+import { Pencil, Power, Eye, MoreVertical } from "lucide-react";
 import { Dropdown, Button } from "antd";
 
 export default function ProjectRow({

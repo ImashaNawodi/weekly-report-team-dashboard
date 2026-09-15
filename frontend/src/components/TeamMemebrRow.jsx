@@ -1,17 +1,11 @@
-import React from "react";
-
 import {
   MoreOutlined,
-  EyeOutlined,
   EditOutlined,
   StopOutlined,
   FileTextOutlined,
 } from "@ant-design/icons";
 
-import {
-  Button,
-  Dropdown,
-} from "antd";
+import { Button, Dropdown } from "antd";
 
 export default function TeamMemberRow({
   member,
@@ -22,7 +16,6 @@ export default function TeamMemberRow({
   toggling,
 }) {
   const menuItems = [
-   
     {
       key: "reports",
       label: "View Reports",
@@ -39,13 +32,11 @@ export default function TeamMemberRow({
       onClick: () => {
         onEdit(member);
       },
-    }, 
+    },
 
     {
       key: "status",
-      label: member.isActive
-        ? "Deactivate"
-        : "Activate",
+      label: member.isActive ? "Deactivate" : "Activate",
 
       icon: <StopOutlined />,
 

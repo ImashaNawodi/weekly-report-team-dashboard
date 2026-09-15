@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import {
   SearchOutlined,
@@ -26,7 +31,6 @@ import {
   Table,
   Tag,
   Tooltip,
-  message,
   notification,
 } from "antd";
 
@@ -59,6 +63,127 @@ const { RangePicker } = DatePicker;
 
 const PAGE_SIZE = 8;
 
+/* =========================================================
+   HELPER FUNCTIONS
+   ========================================================= */
+
+const getReportMember = (report) => {
+  return (
+    report?.user ||
+    report?.member ||
+    report?.createdBy ||
+    report?.employee ||
+    report?.teamMember ||
+    report?.submittedBy ||
+    null
+  );
+};
+
+const getMemberId = (report) => {
+  const member = getReportMember(report);
+
+  if (!member) {
+    return null;
+  }
+
+  if (typeof member === "string") {
+    return member;
+  }
+
+  return (
+    member._id ||
+    member.userID ||
+    member.userId ||
+    member.memberID ||
+    member.memberId ||
+    member.accountID ||
+    member.accountId ||
+    null
+  );
+};
+
+const getMemberName = (report) => {
+  const member = getReportMember(report);
+
+  if (!member) {
+    return "Unknown Member";
+  }
+
+  if (typeof member === "string") {
+    return member;
+  }
+
+  if (member.name) {
+    return member.name;
+  }
+
+  if (member.fullName) {
+    return member.fullName;
+  }
+
+  if (member.firstName || member.lastName) {
+    return `${member.firstName || ""} ${
+      member.lastName || ""
+    }`.trim();
+  }
+
+  if (member.username) {
+    return member.username;
+  }
+
+  if (member.email) {
+    return member.email;
+  }
+
+  return "Unknown Member";
+};
+
+const getProjectId = (report) => {
+  const project = report?.project;
+
+  if (!project) {
+    return null;
+  }
+
+  if (typeof project === "string") {
+    return project;
+  }
+
+  return (
+    project._id ||
+    project.projectID ||
+    project.projectId ||
+    project.id ||
+    null
+  );
+};
+
+const getProjectName = (report) => {
+  return (
+    report?.project?.name ||
+    report?.project?.projectName ||
+    "Unknown Project"
+  );
+};
+
+const formatDate = (date) => {
+  if (!date) {
+    return "—";
+  }
+
+  const parsed = dayjs(date);
+
+  if (!parsed.isValid()) {
+    return "—";
+  }
+
+  return parsed.format("DD MMM YYYY");
+};
+
+/* =========================================================
+   COMPONENT
+   ========================================================= */
+
 const ManagerDashboard = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +192,8 @@ const ManagerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-  const [teamMemberFilter, setTeamMemberFilter] = useState("all");
+  const [teamMemberFilter, setTeamMemberFilter] =
+    useState("all");
   const [weekFilter, setWeekFilter] = useState("all");
   const [dateRange, setDateRange] = useState(null);
 
@@ -76,14 +202,16 @@ const ManagerDashboard = () => {
   const [viewReport, setViewReport] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [editingReport, setEditingReport] = useState(null);
+  const [reportModalOpen, setReportModalOpen] =
+    useState(false);
+  const [editingReport, setEditingReport] =
+    useState(null);
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
+  /* =========================================================
+     FETCH REPORTS
+     ========================================================= */
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -108,7 +236,15 @@ const ManagerDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+
+  /* =========================================================
+     MODAL / DRAWER
+     ========================================================= */
 
   const handleCloseReportModal = () => {
     setReportModalOpen(false);
@@ -131,163 +267,84 @@ const ManagerDashboard = () => {
     setViewReport(null);
   };
 
+  /* =========================================================
+     REPORT ACTIONS
+     ========================================================= */
 
-const handleApproveReport = async (report) => {
-  try {
-    const response = await approveReportService(report._id);
-
-    if (!response.success) {
-      throw new Error(
-        response.message || "Failed to approve report",
+  const handleApproveReport = async (report) => {
+    try {
+      const response = await approveReportService(
+        report._id,
       );
+
+      if (!response.success) {
+        throw new Error(
+          response.message ||
+            "Failed to approve report",
+        );
+      }
+
+      notification.success({
+        message:
+          response.message ||
+          "Report approved successfully",
+        placement: "bottomRight",
+      });
+
+      await fetchReports();
+    } catch (error) {
+      notification.error({
+        message:
+          error?.message ||
+          "Failed to approve report",
+        placement: "bottomRight",
+      });
+
+      throw error;
     }
-
-    notification.success({
-      message: response.message || "Report approved successfully",
-      placement: "bottomRight",
-    });
-
-    await fetchReports();
-  } catch (error) {
-    notification.error({
-      message: error?.message || "Failed to approve report",
-      placement: "bottomRight",
-    });
-
-    throw error;
-  }
-};
-
-const handleRequestCorrection = async (
-  report,
-  managerFeedback,
-) => {
-  try {
-    const response = await requestCorrectionService(
-      report._id,
-      managerFeedback,
-    );
-
-    if (!response.success) {
-      throw new Error(
-        response.message || "Failed to request correction",
-      );
-    }
-
-    notification.success({
-      message:
-        response.message ||
-        "Report sent back for correction",
-      placement: "bottomRight",
-    });
-
-    await fetchReports();
-  } catch (error) {
-    notification.error({
-      message:
-        error?.message ||
-        "Failed to request correction",
-      placement: "bottomRight",
-    });
-
-    throw error;
-  }
-};
-
-  const getReportMember = (report) => {
-    return (
-      report.user ||
-      report.member ||
-      report.createdBy ||
-      report.employee ||
-      report.teamMember ||
-      report.submittedBy ||
-      null
-    );
   };
 
-  const getMemberId = (report) => {
-    const member = getReportMember(report);
+  const handleRequestCorrection = async (
+    report,
+    managerFeedback,
+  ) => {
+    try {
+      const response =
+        await requestCorrectionService(
+          report._id,
+          managerFeedback,
+        );
 
-    if (!member) {
-      return null;
+      if (!response.success) {
+        throw new Error(
+          response.message ||
+            "Failed to request correction",
+        );
+      }
+
+      notification.success({
+        message:
+          response.message ||
+          "Report sent back for correction",
+        placement: "bottomRight",
+      });
+
+      await fetchReports();
+    } catch (error) {
+      notification.error({
+        message:
+          error?.message ||
+          "Failed to request correction",
+        placement: "bottomRight",
+      });
+
+      throw error;
     }
-
-    if (typeof member === "string") {
-      return member;
-    }
-
-    return (
-      member._id ||
-      member.userID ||
-      member.userId ||
-      member.memberID ||
-      member.memberId ||
-      member.accountID ||
-      member.accountId ||
-      null
-    );
   };
 
-  const getMemberName = (report) => {
-    const member = getReportMember(report);
-
-    if (!member) {
-      return "Unknown Member";
-    }
-
-    if (typeof member === "string") {
-      return member;
-    }
-
-    if (member.name) {
-      return member.name;
-    }
-
-    if (member.fullName) {
-      return member.fullName;
-    }
-
-    if (member.firstName || member.lastName) {
-      return `${member.firstName || ""} ${
-        member.lastName || ""
-      }`.trim();
-    }
-
-    if (member.username) {
-      return member.username;
-    }
-
-    if (member.email) {
-      return member.email;
-    }
-
-    return "Unknown Member";
-  };
-
-  const getProjectId = (report) => {
-    const project = report.project;
-
-    if (!project) {
-      return null;
-    }
-
-    return (
-      project._id ||
-      project.projectID ||
-      project.projectId ||
-      project.id ||
-      project
-    );
-  };
-
-  const getProjectName = (report) => {
-    return (
-      report.project?.name ||
-      report.project?.projectName ||
-      "Unknown Project"
-    );
-  };
+  /* =========================================================
+     PROJECTS
+     ========================================================= */
 
   const uniqueProjects = useMemo(() => {
     return Array.from(
@@ -301,7 +358,6 @@ const handleRequestCorrection = async (
             }
 
             const id = getProjectId(report);
-
             const name = getProjectName(report);
 
             return [
@@ -316,6 +372,10 @@ const handleRequestCorrection = async (
       ).values(),
     );
   }, [reports]);
+
+  /* =========================================================
+     TEAM MEMBERS
+     ========================================================= */
 
   const uniqueTeamMembers = useMemo(() => {
     return Array.from(
@@ -341,11 +401,17 @@ const handleRequestCorrection = async (
     );
   }, [reports]);
 
+  /* =========================================================
+     AVAILABLE WEEKS
+     ========================================================= */
+
   const availableWeeks = useMemo(() => {
     return Array.from(
       new Map(
         reports
-          .filter((report) => report.status !== "DRAFT")
+          .filter(
+            (report) => report.status !== "DRAFT",
+          )
           .filter(
             (report) =>
               report.weekNumber !== undefined &&
@@ -354,13 +420,17 @@ const handleRequestCorrection = async (
           .map((report) => [
             Number(report.weekNumber),
             {
-              weekNumber: Number(report.weekNumber),
+              weekNumber: Number(
+                report.weekNumber,
+              ),
               weekStart: report.weekStart,
               weekEnd: report.weekEnd,
             },
           ]),
       ).values(),
-    ).sort((a, b) => a.weekNumber - b.weekNumber);
+    ).sort(
+      (a, b) => a.weekNumber - b.weekNumber,
+    );
   }, [reports]);
 
   const weekOptions = [
@@ -376,8 +446,13 @@ const handleRequestCorrection = async (
 
   const selectedWeek = availableWeeks.find(
     (week) =>
-      Number(week.weekNumber) === Number(weekFilter),
+      Number(week.weekNumber) ===
+      Number(weekFilter),
   );
+
+  /* =========================================================
+     WEEK REPORTS
+     ========================================================= */
 
   const weekScopedReports = useMemo(() => {
     return reports.filter((report) => {
@@ -387,28 +462,39 @@ const handleRequestCorrection = async (
 
       return (
         weekFilter === "all" ||
-        Number(report.weekNumber) === Number(weekFilter)
+        Number(report.weekNumber) ===
+          Number(weekFilter)
       );
     });
   }, [reports, weekFilter]);
 
-  const stats = {
-    total: weekScopedReports.length,
+  /* =========================================================
+     STATISTICS
+     ========================================================= */
 
-    submitted: weekScopedReports.filter(
-      (report) => report.status === "SUBMITTED",
-    ).length,
+  const stats = useMemo(() => {
+    return {
+      total: weekScopedReports.length,
 
-    approved: weekScopedReports.filter(
-      (report) => report.status === "APPROVED",
-    ).length,
+      submitted: weekScopedReports.filter(
+        (report) => report.status === "SUBMITTED",
+      ).length,
 
-    correction: weekScopedReports.filter(
-      (report) =>
-        report.status === "NEEDS_CORRECTION" ||
-        report.status === "CORRECTION_REQUIRED",
-    ).length,
-  };
+      approved: weekScopedReports.filter(
+        (report) => report.status === "APPROVED",
+      ).length,
+
+      correction: weekScopedReports.filter(
+        (report) =>
+          report.status === "NEEDS_CORRECTION" ||
+          report.status === "CORRECTION_REQUIRED",
+      ).length,
+    };
+  }, [weekScopedReports]);
+
+  /* =========================================================
+     FILTERED REPORTS
+     ========================================================= */
 
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
@@ -416,7 +502,9 @@ const handleRequestCorrection = async (
         return false;
       }
 
-      const query = searchQuery.toLowerCase().trim();
+      const query = searchQuery
+        .toLowerCase()
+        .trim();
 
       const projectName = getProjectName(report);
 
@@ -432,22 +520,33 @@ const handleRequestCorrection = async (
 
       const matchesSearch =
         !query ||
-        reportNumber.toLowerCase().includes(query) ||
-        projectName.toLowerCase().includes(query) ||
-        workCompleted.toLowerCase().includes(query) ||
-        memberName.toLowerCase().includes(query);
+        reportNumber
+          .toLowerCase()
+          .includes(query) ||
+        projectName
+          .toLowerCase()
+          .includes(query) ||
+        workCompleted
+          .toLowerCase()
+          .includes(query) ||
+        memberName
+          .toLowerCase()
+          .includes(query);
 
       const matchesStatus =
         statusFilter === "all" ||
         report.status === statusFilter;
 
-      const reportProjectId = getProjectId(report);
+      const reportProjectId =
+        getProjectId(report);
 
       const matchesProject =
         projectFilter === "all" ||
-        String(reportProjectId) === String(projectFilter);
+        String(reportProjectId) ===
+          String(projectFilter);
 
-      const reportMemberId = getMemberId(report);
+      const reportMemberId =
+        getMemberId(report);
 
       const matchesTeamMember =
         teamMemberFilter === "all" ||
@@ -461,17 +560,29 @@ const handleRequestCorrection = async (
 
       let matchesDate = true;
 
-      if (dateRange && dateRange.length === 2) {
-        const [startDate, endDate] = dateRange;
+      if (
+        dateRange &&
+        dateRange.length === 2
+      ) {
+        const [startDate, endDate] =
+          dateRange;
 
-        const reportDate = dayjs(report.weekStart);
+        const reportDate = dayjs(
+          report.weekStart,
+        );
 
         if (!reportDate.isValid()) {
           matchesDate = false;
         } else {
           matchesDate =
-            reportDate.isSame(startDate, "day") ||
-            reportDate.isSame(endDate, "day") ||
+            reportDate.isSame(
+              startDate,
+              "day",
+            ) ||
+            reportDate.isSame(
+              endDate,
+              "day",
+            ) ||
             (reportDate.isAfter(
               startDate,
               "day",
@@ -502,6 +613,10 @@ const handleRequestCorrection = async (
     dateRange,
   ]);
 
+  /* =========================================================
+     WEEK MEMBER COUNT
+     ========================================================= */
+
   const selectedWeekMemberCount = useMemo(() => {
     return new Set(
       weekScopedReports.map((report) =>
@@ -509,6 +624,10 @@ const handleRequestCorrection = async (
       ),
     ).size;
   }, [weekScopedReports]);
+
+  /* =========================================================
+     RESET PAGINATION
+     ========================================================= */
 
   useEffect(() => {
     setCurrentPage(1);
@@ -521,11 +640,16 @@ const handleRequestCorrection = async (
     dateRange,
   ]);
 
+  /* =========================================================
+     STATUS CHART
+     ========================================================= */
+
   const statusChartData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const memberName = getMemberName(report);
+      const memberName =
+        getMemberName(report);
 
       if (!dataMap.has(memberName)) {
         dataMap.set(memberName, {
@@ -547,14 +671,18 @@ const handleRequestCorrection = async (
       }
 
       if (
-        report.status === "NEEDS_CORRECTION" ||
-        report.status === "CORRECTION_REQUIRED"
+        report.status ===
+          "NEEDS_CORRECTION" ||
+        report.status ===
+          "CORRECTION_REQUIRED"
       ) {
         item.correction += 1;
       }
     });
 
-    return Array.from(dataMap.values()).sort(
+    return Array.from(
+      dataMap.values(),
+    ).sort(
       (a, b) =>
         b.submitted +
         b.approved +
@@ -565,13 +693,22 @@ const handleRequestCorrection = async (
     );
   }, [weekScopedReports]);
 
+  /* =========================================================
+     REPORT TREND
+     ========================================================= */
+
   const reportsTrendData = useMemo(() => {
     const dataMap = new Map();
 
     reports
-      .filter((report) => report.status !== "DRAFT")
+      .filter(
+        (report) =>
+          report.status !== "DRAFT",
+      )
       .forEach((report) => {
-        const week = Number(report.weekNumber);
+        const week = Number(
+          report.weekNumber,
+        );
 
         if (!Number.isFinite(week)) {
           return;
@@ -597,14 +734,18 @@ const handleRequestCorrection = async (
         }
 
         if (
-          report.status === "NEEDS_CORRECTION" ||
-          report.status === "CORRECTION_REQUIRED"
+          report.status ===
+            "NEEDS_CORRECTION" ||
+          report.status ===
+            "CORRECTION_REQUIRED"
         ) {
           item.correction += 1;
         }
       });
 
-    return Array.from(dataMap.values())
+    return Array.from(
+      dataMap.values(),
+    )
       .sort((a, b) => a.week - b.week)
       .map((item) => ({
         ...item,
@@ -612,62 +753,97 @@ const handleRequestCorrection = async (
       }));
   }, [reports]);
 
+  /* =========================================================
+     PROJECT WORKLOAD
+     ========================================================= */
+
   const projectWorkloadData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const projectName = getProjectName(report);
+      const projectName =
+        getProjectName(report);
 
       dataMap.set(
         projectName,
-        (dataMap.get(projectName) || 0) + 1,
+        (dataMap.get(projectName) || 0) +
+          1,
       );
     });
 
-    return Array.from(dataMap.entries())
+    return Array.from(
+      dataMap.entries(),
+    )
       .map(([name, reportsCount]) => ({
         name,
         reports: reportsCount,
       }))
-      .sort((a, b) => b.reports - a.reports);
+      .sort(
+        (a, b) => b.reports - a.reports,
+      );
   }, [weekScopedReports]);
+
+  /* =========================================================
+     MEMBER WORKLOAD
+     ========================================================= */
 
   const memberWorkloadData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const memberName = getMemberName(report);
+      const memberName =
+        getMemberName(report);
 
       dataMap.set(
         memberName,
-        (dataMap.get(memberName) || 0) + 1,
+        (dataMap.get(memberName) || 0) +
+          1,
       );
     });
 
-    return Array.from(dataMap.entries())
+    return Array.from(
+      dataMap.entries(),
+    )
       .map(([name, reportsCount]) => ({
         name,
         reports: reportsCount,
       }))
-      .sort((a, b) => b.reports - a.reports);
+      .sort(
+        (a, b) => b.reports - a.reports,
+      );
   }, [weekScopedReports]);
+
+  /* =========================================================
+     RECENT ACTIVITY
+     ========================================================= */
 
   const recentActivity = useMemo(() => {
     return [...reports]
-      .filter((report) => report.status !== "DRAFT")
+      .filter(
+        (report) =>
+          report.status !== "DRAFT",
+      )
       .sort((a, b) => {
         const dateA = new Date(
-          a.updatedAt || a.createdAt || 0,
+          a.updatedAt ||
+            a.createdAt ||
+            0,
         ).getTime();
 
         const dateB = new Date(
-          b.updatedAt || b.createdAt || 0,
+          b.updatedAt ||
+            b.createdAt ||
+            0,
         ).getTime();
 
         return dateB - dateA;
       })
       .slice(0, 6);
   }, [reports]);
+
+  /* =========================================================
+     STATUS
+     ========================================================= */
 
   const renderStatus = (status) => {
     switch (status) {
@@ -697,7 +873,9 @@ const handleRequestCorrection = async (
       case "CORRECTION_REQUIRED":
         return (
           <Tag
-            icon={<ExclamationCircleOutlined />}
+            icon={
+              <ExclamationCircleOutlined />
+            }
             color="warning"
             className="rounded-md px-2 py-1"
           >
@@ -713,6 +891,10 @@ const handleRequestCorrection = async (
         );
     }
   };
+
+  /* =========================================================
+     ACTIVITY HELPERS
+     ========================================================= */
 
   const getActivityIcon = (status) => {
     if (status === "APPROVED") {
@@ -742,9 +924,12 @@ const handleRequestCorrection = async (
   };
 
   const getActivityText = (report) => {
-    const memberName = getMemberName(report);
+    const memberName =
+      getMemberName(report);
+
     const reportNumber =
       report.reportNumber || "Report";
+
     const weekText = report.weekNumber
       ? `Week ${report.weekNumber}`
       : "";
@@ -764,7 +949,9 @@ const handleRequestCorrection = async (
   };
 
   const formatActivityDate = (report) => {
-    const date = report.updatedAt || report.createdAt;
+    const date =
+      report.updatedAt ||
+      report.createdAt;
 
     if (!date) {
       return "Recently";
@@ -776,23 +963,14 @@ const handleRequestCorrection = async (
       return "Recently";
     }
 
-    return parsed.format("DD MMM YYYY, hh:mm A");
-  };
-
-  const formatDate = (date) => {
-    if (!date) {
-      return "—";
-    }
-
-    return new Date(date).toLocaleDateString(
-      "en-GB",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      },
+    return parsed.format(
+      "DD MMM YYYY, hh:mm A",
     );
   };
+
+  /* =========================================================
+     TABLE COLUMNS
+     ========================================================= */
 
   const columns = [
     {
@@ -821,7 +999,8 @@ const handleRequestCorrection = async (
       width: 200,
 
       render: (_, report) => {
-        const memberName = getMemberName(report);
+        const memberName =
+          getMemberName(report);
 
         return (
           <div className="flex items-center gap-2">
@@ -845,7 +1024,8 @@ const handleRequestCorrection = async (
       width: 200,
 
       render: (_, report) => {
-        const projectName = getProjectName(report);
+        const projectName =
+          getProjectName(report);
 
         return (
           <div className="flex items-center gap-2">
@@ -922,6 +1102,10 @@ const handleRequestCorrection = async (
     },
   ];
 
+  /* =========================================================
+     FILTERS
+     ========================================================= */
+
   const statusItems = [
     {
       value: "all",
@@ -955,11 +1139,16 @@ const handleRequestCorrection = async (
   };
 
   const hasFilters =
-    searchQuery ||
+    Boolean(searchQuery) ||
     statusFilter !== "all" ||
     projectFilter !== "all" ||
     teamMemberFilter !== "all" ||
-    dateRange;
+    weekFilter !== "all" ||
+    Boolean(dateRange);
+
+  /* =========================================================
+     LOADING
+     ========================================================= */
 
   if (loading) {
     return (
@@ -968,6 +1157,10 @@ const handleRequestCorrection = async (
       </div>
     );
   }
+
+  /* =========================================================
+     ERROR
+     ========================================================= */
 
   if (error) {
     return (
@@ -988,8 +1181,14 @@ const handleRequestCorrection = async (
     );
   }
 
+  /* =========================================================
+     UI
+     ========================================================= */
+
   return (
     <div className="min-h-full bg-slate-50 p-4 sm:p-6 lg:p-8">
+      {/* WEEK SELECTOR */}
+
       <Card className="mb-6 rounded-xl border-0 shadow-sm">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
@@ -1002,8 +1201,8 @@ const handleRequestCorrection = async (
             </div>
 
             <p className="m-0 text-sm text-slate-500">
-              Select a reporting week to view all team
-              members' submitted reports.
+              Select a reporting week to view all
+              team members' submitted reports.
             </p>
           </div>
 
@@ -1016,7 +1215,9 @@ const handleRequestCorrection = async (
                 setDateRange(null);
               }}
               className="w-full lg:w-[260px]"
-              suffixIcon={<CalendarOutlined />}
+              suffixIcon={
+                <CalendarOutlined />
+              }
               options={weekOptions}
               showSearch
               optionFilterProp="label"
@@ -1032,17 +1233,26 @@ const handleRequestCorrection = async (
                 </Tag>
 
                 <span className="text-sm text-slate-500">
-                  {formatDate(selectedWeek.weekStart)} -{" "}
-                  {formatDate(selectedWeek.weekEnd)}
+                  {formatDate(
+                    selectedWeek.weekStart,
+                  )}{" "}
+                  -{" "}
+                  {formatDate(
+                    selectedWeek.weekEnd,
+                  )}
                 </span>
 
                 <span className="text-sm font-medium text-slate-700">
-                  {selectedWeekMemberCount} team member
-                  {selectedWeekMemberCount !== 1
+                  {selectedWeekMemberCount} team
+                  member
+                  {selectedWeekMemberCount !==
+                  1
                     ? "s"
                     : ""}{" "}
-                  · {weekScopedReports.length} report
-                  {weekScopedReports.length !== 1
+                  · {weekScopedReports.length}{" "}
+                  report
+                  {weekScopedReports.length !==
+                  1
                     ? "s"
                     : ""}
                 </span>
@@ -1051,7 +1261,9 @@ const handleRequestCorrection = async (
                   type="text"
                   size="small"
                   icon={<CloseOutlined />}
-                  onClick={() => setWeekFilter("all")}
+                  onClick={() =>
+                    setWeekFilter("all")
+                  }
                   className="flex-shrink-0 text-slate-400 hover:text-red-500"
                 />
               </div>
@@ -1059,6 +1271,8 @@ const handleRequestCorrection = async (
           </div>
         </div>
       </Card>
+
+      {/* STATISTICS */}
 
       <Row
         gutter={[16, 16]}
@@ -1113,6 +1327,8 @@ const handleRequestCorrection = async (
         </Col>
       </Row>
 
+      {/* STATUS / TREND CHARTS */}
+
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} lg={14}>
           <Card
@@ -1131,10 +1347,13 @@ const handleRequestCorrection = async (
               </div>
             }
           >
-            {statusChartData.length === 0 ? (
+            {statusChartData.length ===
+            0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  image={
+                    Empty.PRESENTED_IMAGE_SIMPLE
+                  }
                   description="No report status data available"
                 />
               </div>
@@ -1216,10 +1435,13 @@ const handleRequestCorrection = async (
               </div>
             }
           >
-            {reportsTrendData.length === 0 ? (
+            {reportsTrendData.length ===
+            0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  image={
+                    Empty.PRESENTED_IMAGE_SIMPLE
+                  }
                   description="No trend data available"
                 />
               </div>
@@ -1293,6 +1515,8 @@ const handleRequestCorrection = async (
         </Col>
       </Row>
 
+      {/* WORKLOAD CHARTS */}
+
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} lg={12}>
           <Card
@@ -1309,10 +1533,13 @@ const handleRequestCorrection = async (
               </div>
             }
           >
-            {projectWorkloadData.length === 0 ? (
+            {projectWorkloadData.length ===
+            0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  image={
+                    Empty.PRESENTED_IMAGE_SIMPLE
+                  }
                   description="No project workload data"
                 />
               </div>
@@ -1356,7 +1583,12 @@ const handleRequestCorrection = async (
                     dataKey="reports"
                     name="Reports"
                     fill="#6366f1"
-                    radius={[0, 5, 5, 0]}
+                    radius={[
+                      0,
+                      5,
+                      5,
+                      0,
+                    ]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1379,10 +1611,13 @@ const handleRequestCorrection = async (
               </div>
             }
           >
-            {memberWorkloadData.length === 0 ? (
+            {memberWorkloadData.length ===
+            0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  image={
+                    Empty.PRESENTED_IMAGE_SIMPLE
+                  }
                   description="No team workload data"
                 />
               </div>
@@ -1426,7 +1661,12 @@ const handleRequestCorrection = async (
                     dataKey="reports"
                     name="Reports"
                     fill="#8b5cf6"
-                    radius={[0, 5, 5, 0]}
+                    radius={[
+                      0,
+                      5,
+                      5,
+                      0,
+                    ]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1434,6 +1674,8 @@ const handleRequestCorrection = async (
           </Card>
         </Col>
       </Row>
+
+      {/* RECENT ACTIVITY */}
 
       <Card
         className="mb-6 rounded-xl border-0 shadow-sm"
@@ -1451,7 +1693,9 @@ const handleRequestCorrection = async (
       >
         {recentActivity.length === 0 ? (
           <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            image={
+              Empty.PRESENTED_IMAGE_SIMPLE
+            }
             description="No recent activity"
           />
         ) : (
@@ -1461,7 +1705,9 @@ const handleRequestCorrection = async (
                 key={report._id}
                 className="flex items-center gap-4 py-4"
               >
-                {getActivityIcon(report.status)}
+                {getActivityIcon(
+                  report.status,
+                )}
 
                 <div className="min-w-0 flex-1">
                   <p className="m-0 truncate text-sm font-medium text-slate-700">
@@ -1470,6 +1716,7 @@ const handleRequestCorrection = async (
 
                   <p className="m-0 mt-1 text-xs text-slate-400">
                     {getProjectName(report)}
+
                     {report.reportNumber
                       ? ` · ${report.reportNumber}`
                       : ""}
@@ -1477,11 +1724,15 @@ const handleRequestCorrection = async (
                 </div>
 
                 <div className="hidden sm:block">
-                  {renderStatus(report.status)}
+                  {renderStatus(
+                    report.status,
+                  )}
                 </div>
 
                 <span className="whitespace-nowrap text-xs text-slate-400">
-                  {formatActivityDate(report)}
+                  {formatActivityDate(
+                    report,
+                  )}
                 </span>
               </div>
             ))}
@@ -1489,9 +1740,15 @@ const handleRequestCorrection = async (
         )}
       </Card>
 
+      {/* FILTERS */}
+
       <Card
         className="mb-6 rounded-xl border-0 shadow-sm"
-        bodyStyle={{ padding: 16 }}
+        styles={{
+          body: {
+            padding: 16,
+          },
+        }}
       >
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
@@ -1520,7 +1777,9 @@ const handleRequestCorrection = async (
                 onChange={setStatusFilter}
                 options={statusItems}
                 className="w-full"
-                suffixIcon={<FilterOutlined />}
+                suffixIcon={
+                  <FilterOutlined />
+                }
               />
             </div>
 
@@ -1531,7 +1790,9 @@ const handleRequestCorrection = async (
                 onChange={setProjectFilter}
                 className="w-full"
                 placeholder="Select Project"
-                suffixIcon={<FilterOutlined />}
+                suffixIcon={
+                  <FilterOutlined />
+                }
                 showSearch
                 optionFilterProp="label"
                 options={[
@@ -1553,10 +1814,14 @@ const handleRequestCorrection = async (
               <Select
                 size="large"
                 value={teamMemberFilter}
-                onChange={setTeamMemberFilter}
+                onChange={
+                  setTeamMemberFilter
+                }
                 className="w-full"
                 placeholder="Team Member"
-                suffixIcon={<UserOutlined />}
+                suffixIcon={
+                  <UserOutlined />
+                }
                 showSearch
                 optionFilterProp="label"
                 options={[
@@ -1609,9 +1874,15 @@ const handleRequestCorrection = async (
         </div>
       </Card>
 
+      {/* REPORT TABLE */}
+
       <Card
         className="rounded-xl border-0 shadow-sm"
-        bodyStyle={{ padding: 0 }}
+        styles={{
+          body: {
+            padding: 0,
+          },
+        }}
       >
         <div className="border-b border-slate-100 px-4 py-4 sm:px-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1639,13 +1910,16 @@ const handleRequestCorrection = async (
                   color="blue"
                   className="m-0 rounded-md px-3 py-1"
                 >
-                  {selectedWeekMemberCount} Members
+                  {selectedWeekMemberCount}{" "}
+                  Members
                 </Tag>
               )}
 
               <span className="text-sm text-slate-400">
-                {filteredReports.length} report
-                {filteredReports.length !== 1
+                {filteredReports.length}{" "}
+                report
+                {filteredReports.length !==
+                1
                   ? "s"
                   : ""}
               </span>
@@ -1678,7 +1952,10 @@ const handleRequestCorrection = async (
               pageSize: PAGE_SIZE,
               total: filteredReports.length,
               showSizeChanger: false,
-              showTotal: (total, range) =>
+              showTotal: (
+                total,
+                range,
+              ) =>
                 `Showing ${range[0]}–${range[1]} of ${total}`,
               onChange: (page) =>
                 setCurrentPage(page),
@@ -1691,11 +1968,15 @@ const handleRequestCorrection = async (
         )}
       </Card>
 
+      {/* REPORT DETAIL DRAWER */}
+
       <ReportDetailDrawer
         report={viewReport}
         open={drawerOpen}
         onClose={handleCloseDrawer}
       />
+
+      {/* REPORT MODAL */}
 
       <ReportModal
         open={reportModalOpen}

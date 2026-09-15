@@ -10,7 +10,7 @@ import {
   CalendarCheck,
   TrendingUp,
 } from "lucide-react";
-import { Alert, Button, Form, Input, notification } from "antd";
+import { Button, Form, Input, notification } from "antd";
 import WorkPulseLogo from "../components/WorkPlusLogo";
 import { forgotPasswordService } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
