@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect} from "react";
 
 import {
   SearchOutlined,
@@ -38,7 +38,6 @@ import TeamMemberDetailDrawer from "../components/TeamMemberDetailDrawer";
 import { getAllProjectsService } from "../services/ProjectService";
 import TeamMemberRow from "../components/TeamMemebrRow";
 import StatusBadge from "../components/StatusBadge";
-import { AuthContext } from "../context/AuthContext";
 
 const PAGE_SIZE = 8;
 
@@ -56,11 +55,9 @@ export default function TeamDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
-  const { getAuthUser } = useContext(AuthContext);
 
   useEffect(() => {
-    console.log("TEAM DASHBOARD MOUNTED");
-    console.log("GET AUTH USER FUNCTION:", getAuthUser);
+    
 
     fetchAllUsers();
     handleViewAllProjects();
