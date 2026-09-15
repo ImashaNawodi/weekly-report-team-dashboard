@@ -13,7 +13,6 @@ import AchievementsSection from "../components/sections/AchievementSection";
 import HoursWorkedSection from "../components/sections/HoursWorkedSection";
 import NotesSection from "../components/sections/NotesSection";
 
-
 import { HOUR_TYPES } from "../helpers/Constants";
 
 import {
@@ -22,10 +21,6 @@ import {
 } from "../services/ReportService";
 
 import { getUserProjectsService } from "../services/ProjectService";
-
-/* =========================================================
-   HELPERS
-========================================================= */
 
 const getWeekStart = (date = new Date()) => {
   const currentDate = new Date(date);
@@ -61,7 +56,10 @@ const getISOWeekNumber = (date) => {
   target.setMonth(0, 1);
 
   if (target.getDay() !== 4) {
-    target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
+    target.setMonth(
+      0,
+      1 + ((4 - target.getDay() + 7) % 7)
+    );
   }
 
   return 1 + Math.ceil((firstThursday - target) / 604800000);
@@ -76,29 +74,19 @@ const createEmptyReport = () => {
 
   return {
     weekStart: dateToStr(weekStart),
-
     weekNumber: getISOWeekNumber(weekStart),
-
     project: "",
-
     tasksCompleted: [],
-
     plannedTasks: [],
-
     blockers: [],
-
     achievements: [],
-
     hours: HOUR_TYPES.map((type) => ({
       id: createClientId(),
       type,
       hours: 0,
     })),
-
     notes: "",
-
     links: [],
-
     status: "Draft",
   };
 };
@@ -113,37 +101,22 @@ const getDisplayStatus = (status) => {
   switch (normalizedStatus) {
     case "draft":
       return "Draft";
-
     case "submitted":
       return "Submitted";
-
     case "approved":
       return "Approved";
-
     case "rejected":
       return "Rejected";
-
     case "correction_requested":
-      return "Correction Requested";
-
     case "correction requested":
       return "Correction Requested";
-
     default:
       return status;
   }
 };
 
-/* =========================================================
-   COMPONENT
-========================================================= */
-
 export default function WeeklyReport() {
   const navigate = useNavigate();
-
-  /* =======================================================
-     SESSION STORAGE
-  ======================================================= */
 
   const editingReport =
     sessionStorage.getItem("editingReport") === "true";
@@ -160,43 +133,31 @@ export default function WeeklyReport() {
     }
   }
 
-  /* =======================================================
-     INITIAL REPORT
-  ======================================================= */
-
   const getInitialReport = () => {
     if (editingReport && editReportData) {
       const emptyReport = createEmptyReport();
 
       return {
         ...emptyReport,
-
         ...editReportData,
-
         tasksCompleted: Array.isArray(editReportData.tasksCompleted)
           ? editReportData.tasksCompleted
           : [],
-
         plannedTasks: Array.isArray(editReportData.plannedTasks)
           ? editReportData.plannedTasks
           : [],
-
         blockers: Array.isArray(editReportData.blockers)
           ? editReportData.blockers
           : [],
-
         achievements: Array.isArray(editReportData.achievements)
           ? editReportData.achievements
           : [],
-
         hours: Array.isArray(editReportData.hours)
           ? editReportData.hours
           : emptyReport.hours,
-
         links: Array.isArray(editReportData.links)
           ? editReportData.links
           : [],
-
         notes: editReportData.notes || "",
       };
     }
@@ -204,23 +165,11 @@ export default function WeeklyReport() {
     return createEmptyReport();
   };
 
-  /* =======================================================
-     STATE
-  ======================================================= */
-
   const [report, setReport] = useState(getInitialReport);
-
   const [assignedProject, setAssignedProject] = useState(null);
-
   const [projectLoading, setProjectLoading] = useState(true);
-
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-
   const [isSaving, setIsSaving] = useState(false);
-
-  /* =======================================================
-     GET USER PROJECT
-  ======================================================= */
 
   const getUserProject = useCallback(async () => {
     try {
@@ -239,7 +188,6 @@ export default function WeeklyReport() {
 
         setReport((current) => ({
           ...current,
-
           project:
             current.project ||
             project._id ||
@@ -251,24 +199,15 @@ export default function WeeklyReport() {
       }
     } catch (error) {
       console.error("Failed to load assigned project:", error);
-
       message.error("Failed to load assigned project");
     } finally {
       setProjectLoading(false);
     }
   }, []);
 
-  /* =======================================================
-     LOAD PROJECT
-  ======================================================= */
-
   useEffect(() => {
     getUserProject();
   }, [getUserProject]);
-
-  /* =======================================================
-     PROJECT CHANGE
-  ======================================================= */
 
   const handleProjectChange = useCallback((value) => {
     setReport((current) => ({
@@ -277,20 +216,12 @@ export default function WeeklyReport() {
     }));
   }, []);
 
-  /* =======================================================
-     TASKS COMPLETED
-  ======================================================= */
-
   const handleTasksCompletedChange = useCallback((tasks) => {
     setReport((current) => ({
       ...current,
       tasksCompleted: Array.isArray(tasks) ? tasks : [],
     }));
   }, []);
-
-  /* =======================================================
-     PLANNED TASKS
-  ======================================================= */
 
   const handlePlannedTasksChange = useCallback((tasks) => {
     setReport((current) => ({
@@ -299,20 +230,12 @@ export default function WeeklyReport() {
     }));
   }, []);
 
-  /* =======================================================
-     BLOCKERS
-  ======================================================= */
-
   const handleBlockersChange = useCallback((blockers) => {
     setReport((current) => ({
       ...current,
       blockers: Array.isArray(blockers) ? blockers : [],
     }));
   }, []);
-
-  /* =======================================================
-     ACHIEVEMENTS
-  ======================================================= */
 
   const handleAchievementsChange = useCallback((achievements) => {
     setReport((current) => ({
@@ -323,18 +246,6 @@ export default function WeeklyReport() {
     }));
   }, []);
 
-  /* =======================================================
-     HOURS WORKED
-     
-     IMPORTANT:
-     HoursWorkedSection calls:
-     
-       onChange(type, value)
-     
-     Therefore we must update the matching item inside
-     report.hours instead of replacing report.hours.
-  ======================================================= */
-
   const handleHoursChange = useCallback((type, value) => {
     setReport((current) => {
       const currentHours = Array.isArray(current.hours)
@@ -342,27 +253,25 @@ export default function WeeklyReport() {
         : [];
 
       const existingEntry = currentHours.find(
-        (item) => item?.type === type,
+        (item) => item?.type === type
       );
 
       if (existingEntry) {
         return {
           ...current,
-
           hours: currentHours.map((item) =>
             item?.type === type
               ? {
                   ...item,
                   hours: Number(value) || 0,
                 }
-              : item,
+              : item
           ),
         };
       }
 
       return {
         ...current,
-
         hours: [
           ...currentHours,
           {
@@ -375,20 +284,12 @@ export default function WeeklyReport() {
     });
   }, []);
 
-  /* =======================================================
-     NOTES
-  ======================================================= */
-
   const handleNotesChange = useCallback((notes) => {
     setReport((current) => ({
       ...current,
       notes: notes || "",
     }));
   }, []);
-
-  /* =======================================================
-     LINKS
-  ======================================================= */
 
   const handleLinksChange = useCallback((links) => {
     setReport((current) => ({
@@ -397,10 +298,6 @@ export default function WeeklyReport() {
     }));
   }, []);
 
-  /* =======================================================
-     REPORT META CHANGE
-  ======================================================= */
-
   const handleMetaChange = useCallback((updates) => {
     setReport((current) => ({
       ...current,
@@ -408,66 +305,41 @@ export default function WeeklyReport() {
     }));
   }, []);
 
-  /* =======================================================
-     BUILD PAYLOAD
-  ======================================================= */
-
   const buildReportPayload = useCallback(() => {
     return {
       ...report,
-
       project: report.project || "",
-
       weekStart: report.weekStart,
-
       weekNumber: report.weekNumber,
-
       tasksCompleted: Array.isArray(report.tasksCompleted)
         ? report.tasksCompleted
         : [],
-
       plannedTasks: Array.isArray(report.plannedTasks)
         ? report.plannedTasks
         : [],
-
       blockers: Array.isArray(report.blockers)
         ? report.blockers
         : [],
-
       achievements: Array.isArray(report.achievements)
         ? report.achievements
         : [],
-
-      /*
-       * IMPORTANT:
-       * Always make sure hours is an array before using .map()
-       */
       hours: Array.isArray(report.hours)
         ? report.hours.map((item) => ({
             ...item,
-
             hours: Number(item?.hours) || 0,
           }))
         : [],
-
       notes: report.notes || "",
-
       links: Array.isArray(report.links)
         ? report.links
         : [],
-
       status: report.status || "Draft",
     };
   }, [report]);
 
-  /* =======================================================
-     VALIDATION
-  ======================================================= */
-
   const validateReport = () => {
     if (!report.project) {
       message.error("Please select a project");
-
       return false;
     }
 
@@ -475,11 +347,11 @@ export default function WeeklyReport() {
       Array.isArray(report.tasksCompleted) &&
       report.tasksCompleted.some(
         (task) =>
-          typeof task === "string" && !task.trim(),
+          typeof task === "string" && !task.trim()
       )
     ) {
       message.error(
-        "Please enter a task name or remove the empty task.",
+        "Please enter a task name or remove the empty task."
       );
 
       return false;
@@ -487,10 +359,6 @@ export default function WeeklyReport() {
 
     return true;
   };
-
-  /* =======================================================
-     SAVE DRAFT
-  ======================================================= */
 
   const handleSaveDraft = async () => {
     if (!validateReport()) {
@@ -507,12 +375,12 @@ export default function WeeklyReport() {
       if (editingReport && editReportData?._id) {
         response = await updateReportService(
           editReportData._id,
-          payload,
+          payload
         );
       } else if (editingReport && editReportData?.id) {
         response = await updateReportService(
           editReportData.id,
-          payload,
+          payload
         );
       } else {
         response = await createReportService(payload);
@@ -525,9 +393,7 @@ export default function WeeklyReport() {
 
       setReport((current) => ({
         ...current,
-
         ...(savedReport || {}),
-
         hours: Array.isArray(savedReport?.hours)
           ? savedReport.hours
           : current.hours,
@@ -536,7 +402,7 @@ export default function WeeklyReport() {
       message.success(
         editingReport
           ? "Report updated successfully"
-          : "Report saved as draft successfully",
+          : "Report saved as draft successfully"
       );
 
       sessionStorage.removeItem("editingReport");
@@ -557,17 +423,9 @@ export default function WeeklyReport() {
     }
   };
 
-  /* =======================================================
-     PREVIEW
-  ======================================================= */
-
   const handlePreview = () => {
     setShowPreviewModal(true);
   };
-
-  /* =======================================================
-     CANCEL
-  ======================================================= */
 
   const handleCancel = () => {
     sessionStorage.removeItem("editingReport");
@@ -576,16 +434,8 @@ export default function WeeklyReport() {
     navigate("/manager-home/reports");
   };
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
-
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ===================================================
-          HEADER / META
-      =================================================== */}
-
       <ReportMetaBar
         report={report}
         onChange={handleMetaChange}
@@ -593,16 +443,8 @@ export default function WeeklyReport() {
         editing={editingReport}
       />
 
-      {/* ===================================================
-          MAIN CONTENT
-      =================================================== */}
-
       <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="space-y-6">
-          {/* ===============================================
-              PROJECT
-          =============================================== */}
-
           <ProjectSection
             project={report.project}
             assignedProject={assignedProject}
@@ -610,45 +452,25 @@ export default function WeeklyReport() {
             onChange={handleProjectChange}
           />
 
-          {/* ===============================================
-              TASKS COMPLETED
-          =============================================== */}
-
           <TasksCompletedSection
             tasks={report.tasksCompleted}
             onChange={handleTasksCompletedChange}
           />
-
-          {/* ===============================================
-              PLANNED TASKS
-          =============================================== */}
 
           <PlannedTasksSection
             tasks={report.plannedTasks}
             onChange={handlePlannedTasksChange}
           />
 
-          {/* ===============================================
-              BLOCKERS
-          =============================================== */}
-
           <BlockersSection
             blockers={report.blockers}
             onChange={handleBlockersChange}
           />
 
-          {/* ===============================================
-              ACHIEVEMENTS
-          =============================================== */}
-
           <AchievementsSection
             achievements={report.achievements}
             onChange={handleAchievementsChange}
           />
-
-          {/* ===============================================
-              HOURS WORKED
-          =============================================== */}
 
           <HoursWorkedSection
             hours={
@@ -660,20 +482,12 @@ export default function WeeklyReport() {
             onChange={handleHoursChange}
           />
 
-          {/* ===============================================
-              NOTES
-          =============================================== */}
-
           <NotesSection
             notes={report.notes}
             onChange={handleNotesChange}
           />
         </div>
       </main>
-
-      {/* ===================================================
-          ACTION BAR
-      =================================================== */}
 
       <ActionBar
         onSave={handleSaveDraft}
@@ -683,10 +497,6 @@ export default function WeeklyReport() {
         isEditing={editingReport}
       />
 
-      {/* ===================================================
-          PREVIEW MODAL
-      =================================================== */}
-
       <PreviewModal
         open={showPreviewModal}
         report={report}
@@ -695,3 +505,4 @@ export default function WeeklyReport() {
     </div>
   );
 }
+
