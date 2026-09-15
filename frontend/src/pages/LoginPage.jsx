@@ -4,9 +4,7 @@ import {
   Lock,
   Eye,
   EyeOff,
-  AlertCircle,
   ArrowRight,
-  CheckCircle2,
   BarChart3,
   Users,
   CalendarCheck,
@@ -17,7 +15,6 @@ import {
   Input,
   Button,
   Checkbox,
-  message,
   Typography,
   notification,
 } from "antd";
@@ -37,55 +34,51 @@ export default function LoginPage() {
   const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (values) => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await userSignInService(values);
-    console.log("Login response:", response);
+      const response = await userSignInService(values);
+      console.log("Login response:", response);
 
-    if (response.success) {
-      notification.success({
-        message: "Login Successful",
-        placement: "bottomRight",
-      });
+      if (response.success) {
+        notification.success({
+          message: "Login Successful",
+          placement: "bottomRight",
+        });
 
-      const role = response.user?.role;
-      console.log("User role:", role);
-  setUser(response.user);
+        const role = response.user?.role;
+        console.log("User role:", role);
+        setUser(response.user);
 
-      if (role === "MANAGER") {
-        navigate("/manager-home/dashboard", { replace: true });
-      } else if (role === "ADMIN") {
-       
-        navigate("/manager-home/team", { replace: true });
-      }
-      else if (role === "TEAM_MEMBER") {
-       
-        navigate("/manager-home/reports", { replace: true });
-      }
-       else {
+        if (role === "MANAGER") {
+          navigate("/manager-home/dashboard", { replace: true });
+        } else if (role === "ADMIN") {
+          navigate("/manager-home/team", { replace: true });
+        } else if (role === "TEAM_MEMBER") {
+          navigate("/manager-home/reports", { replace: true });
+        } else {
+          notification.error({
+            message: "Invalid user role",
+            placement: "bottomRight",
+          });
+        }
+      } else {
         notification.error({
-          message: "Invalid user role",
+          message: response.message || "Invalid email or password.",
           placement: "bottomRight",
         });
       }
-    } else {
+    } catch (error) {
+      console.error("Login error:", error);
+
       notification.error({
-        message: response.message || "Invalid email or password.",
+        message: error?.message || "Something went wrong. Please try again.",
         placement: "bottomRight",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Login error:", error);
-
-    notification.error({
-      message: error?.message || "Something went wrong. Please try again.",
-      placement: "bottomRight",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen bg-white">

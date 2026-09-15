@@ -1,9 +1,6 @@
-import { Wrench, Mail, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Wrench, Mail } from "lucide-react";
 
 export default function HealthAndSupport() {
-  const navigate = useNavigate();
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-20 text-center">
       <div className="relative mb-6">

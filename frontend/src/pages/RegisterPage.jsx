@@ -5,7 +5,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  ArrowLeft,
   User,
   BarChart3,
   Users,
@@ -436,19 +435,18 @@ export default function RegisterPage({ onNavigateLogin }) {
 
                     <span className="text-sm text-slate-600">
                       I agree to the
-                      <a
-                        href="#"
+                      <p
                         className="font-medium text-blue-600 hover:underline"
                       >
                         Terms of Service
-                      </a>
+                      </p>
                       and
-                      <a
-                        href="#"
+                      <p
+                        
                         className="font-medium text-blue-600 hover:underline"
                       >
                         Privacy Policy
-                      </a>
+                      </p>
                       .
                     </span>
                   </label>
