@@ -64,8 +64,7 @@ export default function TeamDashboard() {
 
     fetchAllUsers();
     handleViewAllProjects();
-    getAuthUser();
-  }, [getAuthUser]);
+  }, []);
 
   const fetchAllUsers = async () => {
     try {

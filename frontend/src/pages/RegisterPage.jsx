@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import {
   Mail,
   Lock,
@@ -22,6 +22,7 @@ import {
 } from "../helpers/PasswordValidation";
 import WorkPulseLogo from "../components/WorkPlusLogo";
 import { emailFieldValidation } from "../helpers/EmailValidation";
+import { AuthContext } from "../context/AuthContext";
 const features = [
   {
     icon: CalendarCheck,
@@ -43,6 +44,7 @@ const features = [
 
 export default function RegisterPage({ onNavigateLogin }) {
   const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const password = Form.useWatch("password", form);
@@ -62,7 +64,9 @@ export default function RegisterPage({ onNavigateLogin }) {
           placement: "bottomRight",
         });
 
-        navigate("/manager-home/dashboard");
+        setUser(response.user);
+
+        navigate("/manager-home/reports", { replace: true });
       } else {
         notification.error({
           message: "Registration Failed",
@@ -112,9 +116,9 @@ export default function RegisterPage({ onNavigateLogin }) {
           </div>
         </div>
 
-         <div className="relative z-10">
-                 <WorkPulseLogo variant="light" iconSize={28} />
-               </div>
+        <div className="relative z-10">
+          <WorkPulseLogo variant="light" iconSize={28} />
+        </div>
 
         <div className="relative z-10 max-w-md">
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-white">
@@ -434,19 +438,14 @@ export default function RegisterPage({ onNavigateLogin }) {
                     <Checkbox />
 
                     <span className="text-sm text-slate-600">
-                      I agree to the
-                      <p
-                        className="font-medium text-blue-600 hover:underline"
-                      >
+                      I agree to the{" "}
+                      <span className="font-medium text-blue-600 hover:underline cursor-pointer">
                         Terms of Service
-                      </p>
-                      and
-                      <p
-                        
-                        className="font-medium text-blue-600 hover:underline"
-                      >
+                      </span>{" "}
+                      and{" "}
+                      <span className="font-medium text-blue-600 hover:underline cursor-pointer">
                         Privacy Policy
-                      </p>
+                      </span>
                       .
                     </span>
                   </label>
