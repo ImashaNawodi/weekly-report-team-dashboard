@@ -10,9 +10,13 @@ const createReport = async (userID, data) => {
     weekNumber,
     weekStart,
     weekEnd,
-    workCompleted,
-    plannedWork,
+    tasks,
+    plannedTasks,
     blockers,
+    achievements,
+    hours,
+    notes,
+    links,
   } = data;
 
   const user = await userModel.findById(userID);
@@ -30,7 +34,7 @@ const createReport = async (userID, data) => {
   if (!projectExists.isActive) {
     throw new AppError(
       "Cannot create a report for an inactive project",
-      400,
+      400
     );
   }
 
@@ -41,12 +45,18 @@ const createReport = async (userID, data) => {
   const startDate = new Date(weekStart);
   const endDate = new Date(weekEnd);
 
-  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+  if (
+    Number.isNaN(startDate.getTime()) ||
+    Number.isNaN(endDate.getTime())
+  ) {
     throw new AppError("Invalid week dates", 400);
   }
 
   if (startDate > endDate) {
-    throw new AppError("Week start cannot be after week end", 400);
+    throw new AppError(
+      "Week start cannot be after week end",
+      400
+    );
   }
 
   const existingReport = await reportModel.findOne({
@@ -58,7 +68,7 @@ const createReport = async (userID, data) => {
   if (existingReport) {
     throw new AppError(
       "A report already exists for this project and week",
-      400,
+      400
     );
   }
 
@@ -71,9 +81,16 @@ const createReport = async (userID, data) => {
     weekNumber,
     weekStart: startDate,
     weekEnd: endDate,
-    workCompleted,
-    plannedWork,
-    blockers: blockers || "",
+
+    tasks: tasks || [],
+    plannedTasks: plannedTasks || [],
+    blockers: blockers || [],
+    achievements: achievements || [],
+    hours: hours || [],
+
+    notes: notes || "",
+    links: links || "",
+
     status: "DRAFT",
   });
 
@@ -166,13 +183,10 @@ const getAllReports = async (query) => {
 const updateReport = async (reportID, userID, data) => {
   const report = await reportModel.findById(reportID);
 
-  console.log("Report found:", report);
-
   if (!report) {
     throw new AppError("Report not found", 404);
   }
 
-  // Make sure the logged-in user owns this report
   if (report.user.toString() !== userID.toString()) {
     throw new AppError(
       "You can only update your own report",
@@ -180,7 +194,6 @@ const updateReport = async (reportID, userID, data) => {
     );
   }
 
-  // Only DRAFT and NEEDS_CORRECTION reports can be edited
   if (
     report.status !== "DRAFT" &&
     report.status !== "NEEDS_CORRECTION"
@@ -192,22 +205,101 @@ const updateReport = async (reportID, userID, data) => {
   }
 
   const {
+    project,
+    weekNumber,
     weekStart,
     weekEnd,
-    workCompleted,
-    plannedWork,
+    tasks,
+    plannedTasks,
     blockers,
+    achievements,
+    hours,
+    notes,
+    links,
   } = data;
 
-  // Update only editable fields
-  report.weekStart = weekStart;
-  report.weekEnd = weekEnd;
-  report.workCompleted = workCompleted;
-  report.plannedWork = plannedWork;
-  report.blockers = blockers || "";
+  if (project) {
+    const projectExists = await projectModel.findById(project);
 
-  // If manager sent it back for correction,
-  // editing makes it a draft again
+    if (!projectExists) {
+      throw new AppError("Project not found", 404);
+    }
+
+    if (!projectExists.isActive) {
+      throw new AppError(
+        "Cannot use an inactive project",
+        400
+      );
+    }
+
+    report.project = project;
+  }
+
+  if (weekNumber !== undefined) {
+    if (weekNumber < 1) {
+      throw new AppError("Invalid week number", 400);
+    }
+
+    report.weekNumber = weekNumber;
+  }
+
+  if (weekStart !== undefined) {
+    const startDate = new Date(weekStart);
+
+    if (Number.isNaN(startDate.getTime())) {
+      throw new AppError("Invalid week start date", 400);
+    }
+
+    report.weekStart = startDate;
+  }
+
+  if (weekEnd !== undefined) {
+    const endDate = new Date(weekEnd);
+
+    if (Number.isNaN(endDate.getTime())) {
+      throw new AppError("Invalid week end date", 400);
+    }
+
+    report.weekEnd = endDate;
+  }
+
+  if (report.weekStart > report.weekEnd) {
+    throw new AppError(
+      "Week start cannot be after week end",
+      400
+    );
+  }
+
+  if (tasks !== undefined) {
+    report.tasks = tasks;
+  }
+
+  if (plannedTasks !== undefined) {
+    report.plannedTasks = plannedTasks;
+  }
+
+  if (blockers !== undefined) {
+    report.blockers = blockers;
+  }
+
+  if (achievements !== undefined) {
+    report.achievements = achievements;
+  }
+
+  if (hours !== undefined) {
+    report.hours = hours;
+  }
+
+  if (notes !== undefined) {
+    report.notes = notes;
+  }
+
+  if (links !== undefined) {
+    report.links = links;
+  }
+
+  // If manager requested corrections,
+  // editing makes the report a draft again.
   if (report.status === "NEEDS_CORRECTION") {
     report.status = "DRAFT";
     report.managerFeedback = "";
@@ -225,12 +317,18 @@ const submitReport = async (reportID, userID) => {
     throw new AppError("Report not found", 404);
   }
 
-  if (report.user.toString() !== userID) {
-    throw new AppError("You can only submit your own report", 403);
+  if (report.user.toString() !== userID.toString()) {
+    throw new AppError(
+      "You can only submit your own report",
+      403
+    );
   }
 
   if (report.status !== "DRAFT") {
-    throw new AppError("Only draft reports can be submitted", 400);
+    throw new AppError(
+      "Only draft reports can be submitted",
+      400
+    );
   }
 
   const versionNumber = report.versions.length + 1;
@@ -239,9 +337,22 @@ const submitReport = async (reportID, userID) => {
     versionNumber,
     submittedAt: new Date(),
     submittedBy: userID,
-    workCompleted: report.workCompleted,
-    plannedWork: report.plannedWork,
-    blockers: report.blockers,
+
+    tasks: report.tasks.map((task) => task.toObject()),
+    plannedTasks: report.plannedTasks.map((task) =>
+      task.toObject()
+    ),
+    blockers: report.blockers.map((blocker) =>
+      blocker.toObject()
+    ),
+    achievements: report.achievements.map((achievement) =>
+      achievement.toObject()
+    ),
+    hours: report.hours.map((hour) => hour.toObject()),
+
+    notes: report.notes,
+    links: report.links,
+
     status: "SUBMITTED",
   });
 
@@ -259,9 +370,12 @@ const approveReport = async (reportID, managerID) => {
   if (!report) {
     throw new AppError("Report not found", 404);
   }
-console.log("Report found:", report.status);
+
   if (report.status !== "SUBMITTED") {
-    throw new AppError("Only submitted reports can be approved", 400);
+    throw new AppError(
+      "Only submitted reports can be approved",
+      400
+    );
   }
 
   report.status = "APPROVED";
@@ -274,7 +388,10 @@ console.log("Report found:", report.status);
   return report;
 };
 
-const requestCorrection = async (reportID, managerFeedback) => {
+const requestCorrection = async (
+  reportID,
+  managerFeedback
+) => {
   const report = await reportModel.findById(reportID);
 
   if (!report) {
@@ -299,7 +416,6 @@ const requestCorrection = async (reportID, managerFeedback) => {
 
   return report;
 };
-
 module.exports = {
   createReport,
   getMyReports,

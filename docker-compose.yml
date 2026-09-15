@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    container_name: workpulse-backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build: ./frontend
+    container_name: workpulse-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
