@@ -15,7 +15,6 @@ import {
 
 import { Drawer, Button, Tag, Typography } from "antd";
 
-import StatusBadge from "./StatusBadge";
 
 const { Text } = Typography;
 
@@ -281,8 +280,8 @@ export default function ReportDetailDrawer({ report, open, onClose }) {
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
-              {report.status && <StatusBadge status={report.status} />}
-
+{/*               {report.status && <StatusBadge status={report.status} />}
+ */}
               <Button
                 type="text"
                 onClick={onClose}

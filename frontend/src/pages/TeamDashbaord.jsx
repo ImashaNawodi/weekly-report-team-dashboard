@@ -434,7 +434,7 @@ export default function TeamDashboard() {
         title={
           <div className="flex items-center gap-2">
             <TeamOutlined />
-            <span>Team Members - this is for admin</span>
+            <span>Team Members </span>
           </div>
         }
         className="rounded-xl border-slate-200 shadow-sm"

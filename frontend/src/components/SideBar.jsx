@@ -22,12 +22,7 @@ import { logoutService } from "../services/AuthService";
 const { Sider } = Layout;
 
 const mainNav = [
-  {
-    key: "dashboard",
-    label: "Dashboard",
-    icon: <LayoutDashboard size={18} />,
-    roles: ["MANAGER"],
-  },
+
   {
     key: "managerDashboard",
     label: "Manager Dashboard",
@@ -76,10 +71,7 @@ const bottomNav = [
 ];
 
 const pageHeaders = {
-  dashboard: {
-    title: "Dashboard",
-    subtitle: "Overview of your team's activity",
-  },
+
   managerDashboard: {
     title: "Manager Dashboard",
     subtitle: "Overview of your team's activity",

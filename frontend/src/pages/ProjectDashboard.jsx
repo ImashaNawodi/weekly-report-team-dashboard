@@ -284,23 +284,30 @@ const updateProjectStatus = async (projectID, isActive) => {
   ];
   const currentEditingProjectId = editingProject?.projectID;
 
-  const assignedMemberIds = new Set(
-    projects
-      .filter(
-        (project) =>
-          String(project.projectID) !== String(currentEditingProjectId),
-      )
-      .flatMap((project) =>
-        (project.teamMembers ?? []).map((member) => {
-          if (typeof member === "string") {
-            return String(member);
-          }
+ const assignedMemberIds = new Set([
+  // Members already assigned to projects
+  ...projects
+    .filter(
+      (project) =>
+        String(project.projectID) !== String(currentEditingProjectId),
+    )
+    .flatMap((project) =>
+      (project.teamMembers ?? []).map((member) => {
+        if (typeof member === "string") {
+          return String(member);
+        }
 
-          return String(member?._id || member?.id);
-        }),
-      )
-      .filter(Boolean),
-  );
+        return String(member?._id || member?.id);
+      }),
+    )
+    .filter(Boolean),
+
+  // All managers
+  ...members
+    .filter((member) => member.role?.toLowerCase() === "manager")
+    .map((member) => String(member._id || member.id))
+    .filter(Boolean),
+]);
 
   const availableMembers = members.filter((member) => {
     const memberId = String(member?._id || member?.id);

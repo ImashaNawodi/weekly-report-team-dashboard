@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import {
   Mail,
@@ -27,24 +26,12 @@ export default function CheckUser() {
     emailRef.current?.focus();
   }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const emailValue = email.trim();
+  const handleSubmit = async (values) => {
+    const emailValue = values.email?.trim();
 
     if (!emailValue) {
       notification.error({
         message: "Email is required",
-        placement: "bottomRight",
-      });
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(emailValue)) {
-      notification.error({
-        message: "Enter a valid email address",
         placement: "bottomRight",
       });
       return;
@@ -60,8 +47,7 @@ export default function CheckUser() {
       if (!response.success) {
         notification.error({
           message:
-            response.message ||
-            "Unable to send reset email. Please try again.",
+            response.message || "Unable to send reset email. Please try again.",
           placement: "bottomRight",
         });
         return;
@@ -72,6 +58,7 @@ export default function CheckUser() {
         placement: "bottomRight",
       });
 
+      setEmail(emailValue);
       setSent(true);
     } catch (error) {
       console.error("FORGOT PASSWORD ERROR:", error);
@@ -104,15 +91,10 @@ export default function CheckUser() {
           <div className="absolute left-0 right-0 top-0 h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-400" />
 
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-indigo-50 shadow-sm">
-            <CheckCircle2
-              className="h-8 w-8 text-blue-600"
-              strokeWidth={2}
-            />
+            <CheckCircle2 className="h-8 w-8 text-blue-600" strokeWidth={2} />
           </div>
 
-          <h2 className="text-xl font-bold text-slate-900">
-            Check your Email
-          </h2>
+          <h2 className="text-xl font-bold text-slate-900">Check your Email</h2>
 
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
             We've sent a password reset link to{" "}
@@ -123,12 +105,7 @@ export default function CheckUser() {
           <Button
             type="primary"
             onClick={handleNavigateLogin}
-            icon={
-              <ArrowLeft
-                className="h-4 w-4"
-                strokeWidth={2.5}
-              />
-            }
+            icon={<ArrowLeft className="h-4 w-4" strokeWidth={2.5} />}
             className="mt-6 !inline-flex !h-auto !items-center !gap-2 !rounded-lg !border-0 !bg-gradient-to-r !from-blue-600 !to-indigo-600 !px-5 !py-2.5 !text-sm !font-semibold !text-white"
           >
             Back to sign in
@@ -164,10 +141,7 @@ export default function CheckUser() {
         </div>
 
         <div className="relative z-10">
-          <WorkPulseLogo
-            variant="light"
-            iconSize={28}
-          />
+          <WorkPulseLogo variant="light" iconSize={28} />
         </div>
 
         <div className="relative z-10 max-w-md">
@@ -178,8 +152,8 @@ export default function CheckUser() {
           </h1>
 
           <p className="mt-5 text-base leading-relaxed text-slate-300">
-            Enter your work email and we'll send you a secure link to reset
-            your password and get back to your team.
+            Enter your work email and we'll send you a secure link to reset your
+            password and get back to your team.
           </p>
 
           <div className="mt-10 space-y-4">
@@ -200,20 +174,12 @@ export default function CheckUser() {
               const Icon = feature.icon;
 
               return (
-                <div
-                  key={i}
-                  className="flex items-center gap-3"
-                >
+                <div key={i} className="flex items-center gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
-                    <Icon
-                      className="h-4 w-4 text-blue-400"
-                      strokeWidth={2}
-                    />
+                    <Icon className="h-4 w-4 text-blue-400" strokeWidth={2} />
                   </div>
 
-                  <span className="text-sm text-slate-200">
-                    {feature.text}
-                  </span>
+                  <span className="text-sm text-slate-200">{feature.text}</span>
                 </div>
               );
             })}
@@ -223,10 +189,7 @@ export default function CheckUser() {
         <div className="relative z-10 flex items-center gap-8">
           <div>
             <div className="flex items-center gap-1.5 text-2xl font-bold text-white">
-              <TrendingUp
-                className="h-5 w-5 text-blue-400"
-                strokeWidth={2.5}
-              />
+              <TrendingUp className="h-5 w-5 text-blue-400" strokeWidth={2.5} />
               98%
             </div>
 
@@ -240,9 +203,7 @@ export default function CheckUser() {
           <div>
             <div className="text-2xl font-bold text-white">12k+</div>
 
-            <p className="mt-1 text-xs text-slate-400">
-              Teams onboarded
-            </p>
+            <p className="mt-1 text-xs text-slate-400">Teams onboarded</p>
           </div>
 
           <div className="h-10 w-px bg-white/10" />
@@ -250,9 +211,7 @@ export default function CheckUser() {
           <div>
             <div className="text-2xl font-bold text-white">4.9/5</div>
 
-            <p className="mt-1 text-xs text-slate-400">
-              User satisfaction
-            </p>
+            <p className="mt-1 text-xs text-slate-400">User satisfaction</p>
           </div>
         </div>
       </div>
@@ -275,10 +234,7 @@ export default function CheckUser() {
                 onClick={handleNavigateLogin}
                 className="mb-6 flex items-center gap-1.5 text-sm font-medium text-blue-500 transition-colors hover:text-blue-700"
               >
-                <ArrowLeft
-                  className="h-4 w-4"
-                  strokeWidth={2}
-                />
+                <ArrowLeft className="h-4 w-4" strokeWidth={2} />
                 Back to sign in
               </button>
 
@@ -288,8 +244,8 @@ export default function CheckUser() {
                 </h2>
 
                 <p className="mt-2 text-center text-sm leading-relaxed text-slate-500">
-                  Enter your work email and we'll send you a link to reset
-                  your password.
+                  Enter your work email and we'll send you a link to reset your
+                  password.
                 </p>
 
                 <Form
@@ -318,14 +274,11 @@ export default function CheckUser() {
                   >
                     <Input
                       ref={emailRef}
-                      prefix={
-                        <Mail className="h-4 w-4 text-slate-400" />
-                      }
+                      prefix={<Mail className="h-4 w-4 text-slate-400" />}
                       type="email"
                       autoComplete="email"
                       placeholder="you@company.com"
                       size="large"
-                      onChange={(e) => setEmail(e.target.value)}
                       className="!rounded-lg"
                     />
                   </Form.Item>
@@ -373,4 +326,3 @@ export default function CheckUser() {
     </div>
   );
 }
-

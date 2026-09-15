@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CloseOutlined, CheckOutlined } from "@ant-design/icons";
+import { CloseOutlined } from "@ant-design/icons";
 import { Modal, Input, Button, Form, Select } from "antd";
 import { updateUserRoleService } from "../services/TeamService";
 
@@ -10,7 +10,6 @@ export default function TeamMemberModal({
   onSaved,
 }) {
   const [form] = Form.useForm();
-  const [status, setStatus] = useState("active");
   const [saving, setSaving] = useState(false);
 
   const nameRef = useRef(null);
@@ -27,10 +26,8 @@ export default function TeamMemberModal({
         role: editingMember.role || "",
       });
 
-      setStatus(editingMember.isActive ? "active" : "inactive");
     } else {
       form.resetFields();
-      setStatus("active");
     }
 
     setTimeout(() => {
@@ -172,42 +169,6 @@ export default function TeamMemberModal({
               ]}
             />
           </Form.Item>
-        </div>
-
-        <div className="mb-5">
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700">
-            Account Status
-          </label>
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              disabled={!!editingMember}
-              onClick={() => setStatus("active")}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all sm:max-w-[200px] ${
-                status === "active"
-                  ? "border-blue-500 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              } ${editingMember ? "cursor-not-allowed opacity-60" : ""}`}
-            >
-              <CheckOutlined />
-              Active
-            </button>
-
-            <button
-              type="button"
-              disabled={!!editingMember}
-              onClick={() => setStatus("inactive")}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-all sm:max-w-[200px] ${
-                status === "inactive"
-                  ? "border-slate-400 bg-slate-100 text-slate-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              } ${editingMember ? "cursor-not-allowed opacity-60" : ""}`}
-            >
-              <CloseOutlined />
-              Inactive
-            </button>
-          </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
