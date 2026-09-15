@@ -2,7 +2,6 @@ import {
   MoreOutlined,
   EditOutlined,
   StopOutlined,
-  FileTextOutlined,
 } from "@ant-design/icons";
 
 import { Button, Dropdown } from "antd";
@@ -11,19 +10,17 @@ export default function TeamMemberRow({
   member,
   onToggleStatus,
   onEdit,
-  onViewProfile,
-  onViewReports,
   toggling,
 }) {
   const menuItems = [
-    {
-      key: "reports",
-      label: "View Reports",
+    /* {
+      key: "Profile",
+      label: "View Profile",
       icon: <FileTextOutlined />,
       onClick: () => {
-        onViewReports(member);
+        onViewProfile(member);
       },
-    },
+    }, */
 
     {
       key: "edit",
