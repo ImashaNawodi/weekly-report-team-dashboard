@@ -1,9 +1,7 @@
 import { Navigate, Routes, Route } from "react-router-dom";
-
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import ManagerHome from "../pages/ManagerHome";
-import DashboardPage from "../pages/DashbaordPage";
 import ProjectDashboard from "../pages/ProjectDashboard";
 import TeamDashboard from "../pages/TeamDashbaord";
 import ReportDashboard from "../pages/ReportDashboard";
@@ -27,7 +25,6 @@ const AppRoutes = () => {
       <Route path="/forget-pw" element={<ResetPasswordPage />} />
 
       <Route path="/manager-home" element={<ManagerHome />}>
-        <Route path="dashboard" element={<DashboardPage />} />
         <Route path="settings" element={<SettingsPage />} />
 
         <Route element={<RoleRoute allowedRoles={["MANAGER"]} />}>

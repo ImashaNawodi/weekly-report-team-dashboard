@@ -51,7 +51,7 @@ export default function LoginPage() {
         setUser(response.user);
 
         if (role === "MANAGER") {
-          navigate("/manager-home/dashboard", { replace: true });
+          navigate("/manager-home/managerDashboard", { replace: true });
         } else if (role === "ADMIN") {
           navigate("/manager-home/team", { replace: true });
         } else if (role === "TEAM_MEMBER") {

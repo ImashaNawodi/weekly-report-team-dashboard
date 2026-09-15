@@ -19,16 +19,17 @@ export default function HoursWorkedSection({
 
   const total = safeHours.reduce(
     (sum, entry) => sum + (Number(entry?.hours) || 0),
-    0,
+    0
   );
 
   const maxRow = Math.max(
     ...safeHours.map((entry) => Number(entry?.hours) || 0),
-    1,
+    1
   );
 
   const progressPercent = Math.min((total / 40) * 100, 100);
 
+  // Allow numbers, decimal point and navigation/control keys only
   const handleKeyDown = (event) => {
     const allowedKeys = [
       "Backspace",
@@ -52,15 +53,16 @@ export default function HoursWorkedSection({
       return;
     }
 
-    // Allow decimal point
+    // Allow only one decimal point
     if (event.key === ".") {
-      // Prevent typing another decimal point
       if (event.currentTarget.value.includes(".")) {
         event.preventDefault();
       }
+
       return;
     }
 
+    // Block everything else
     event.preventDefault();
   };
 
@@ -73,11 +75,23 @@ export default function HoursWorkedSection({
     >
       <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
         {hourTypes.map((type) => {
-          const entry = safeHours.find((item) => item?.type === type);
+          const entry = safeHours.find(
+            (item) => item?.type === type
+          );
 
           const value = Number(entry?.hours) || 0;
 
-          const rowPercent = Math.min((value / maxRow) * 100, 100);
+          const inputValue =
+            entry?.hours === null ||
+            entry?.hours === undefined ||
+            entry?.hours === ""
+              ? undefined
+              : Number(entry.hours);
+
+          const rowPercent = Math.min(
+            (value / maxRow) * 100,
+            100
+          );
 
           return (
             <div key={type}>
@@ -86,7 +100,9 @@ export default function HoursWorkedSection({
                   {type}
                 </label>
 
-                <span className="text-xs text-slate-400">hours</span>
+                <span className="text-xs text-slate-400">
+                  hours
+                </span>
               </div>
 
               <div className="relative">
@@ -94,48 +110,105 @@ export default function HoursWorkedSection({
                   min={0}
                   max={168}
                   step={0.5}
-                  value={value}
+                  value={inputValue}
                   placeholder="0"
                   controls
                   className="!w-full"
                   onKeyDown={handleKeyDown}
                   parser={(inputValue) => {
-                    if (inputValue === null || inputValue === undefined) {
+                    if (
+                      inputValue === null ||
+                      inputValue === undefined
+                    ) {
                       return "";
                     }
 
-                    let cleaned = String(inputValue).replace(/[^0-9.]/g, "");
+                    // Remove letters and special characters
+                    let cleaned = String(inputValue).replace(
+                      /[^0-9.]/g,
+                      ""
+                    );
 
+                    // Allow only one decimal point
                     const firstDot = cleaned.indexOf(".");
 
                     if (firstDot !== -1) {
                       cleaned =
                         cleaned.slice(0, firstDot + 1) +
-                        cleaned.slice(firstDot + 1).replace(/\./g, "");
+                        cleaned
+                          .slice(firstDot + 1)
+                          .replace(/\./g, "");
                     }
 
                     return cleaned;
                   }}
                   onChange={(newValue) => {
+                    // Empty input becomes 0
                     if (
                       newValue === null ||
                       newValue === undefined ||
                       newValue === ""
                     ) {
-                      onChange(type, 0);
+                      const updatedHours = safeHours.some(
+                        (item) => item?.type === type
+                      )
+                        ? safeHours.map((item) =>
+                            item?.type === type
+                              ? {
+                                  ...item,
+                                  hours: 0,
+                                }
+                              : item
+                          )
+                        : [
+                            ...safeHours,
+                            {
+                              type,
+                              hours: 0,
+                            },
+                          ];
+
+                      onChange(updatedHours);
+
                       return;
                     }
 
                     const numericValue = Number(newValue);
 
+                    // Ignore invalid values
                     if (Number.isNaN(numericValue)) {
-                      onChange(type, 0);
                       return;
                     }
 
-                    const safeValue = Math.min(Math.max(numericValue, 0), 168);
+                    // Keep value between 0 and 168
+                    const safeValue = Math.min(
+                      Math.max(numericValue, 0),
+                      168
+                    );
 
-                    onChange(type, safeValue);
+                    // Update existing activity
+                    // or add a new activity
+                    const updatedHours = safeHours.some(
+                      (item) => item?.type === type
+                    )
+                      ? safeHours.map((item) =>
+                          item?.type === type
+                            ? {
+                                ...item,
+                                hours: safeValue,
+                              }
+                            : item
+                        )
+                      : [
+                          ...safeHours,
+                          {
+                            type,
+                            hours: safeValue,
+                          },
+                        ];
+
+                    // Send the complete array to the parent
+                    onChange(updatedHours);
                   }}
                 />
 
@@ -157,6 +230,7 @@ export default function HoursWorkedSection({
         })}
       </div>
 
+      {/* Total Hours */}
       <div className="mt-6 border-t border-slate-200 pt-4">
         <div className="flex items-center justify-between">
           <div>
@@ -166,8 +240,12 @@ export default function HoursWorkedSection({
 
             <p className="mt-0.5 text-xs text-slate-400">
               {total > 40
-                ? `${(total - 40).toFixed(1)}h over standard 40h week`
-                : `${(40 - total).toFixed(1)}h below standard 40h week`}
+                ? `${(total - 40).toFixed(
+                    1
+                  )}h over standard 40h week`
+                : `${(40 - total).toFixed(
+                    1
+                  )}h below standard 40h week`}
             </p>
           </div>
 
@@ -176,32 +254,49 @@ export default function HoursWorkedSection({
               {total.toFixed(1)}
             </span>
 
-            <span className="ml-1 text-sm text-slate-400">h</span>
+            <span className="ml-1 text-sm text-slate-400">
+              h
+            </span>
           </div>
         </div>
 
+        {/* Progress */}
         <div className="mt-3">
           <Progress
             percent={progressPercent}
             showInfo={false}
-            strokeColor={total > 40 ? "#f59e0b" : "#3b82f6"}
+            strokeColor={
+              total > 40 ? "#f59e0b" : "#3b82f6"
+            }
             trailColor="#f1f5f9"
             strokeWidth={8}
           />
         </div>
 
+        {/* Status */}
         <div className="mt-3 flex justify-end">
           {total > 40 ? (
-            <Tag color="warning" className="!m-0">
+            <Tag
+              color="warning"
+              className="!m-0"
+            >
               Over 40 hours
             </Tag>
           ) : total === 40 ? (
-            <Tag color="success" className="!m-0">
+            <Tag
+              color="success"
+              className="!m-0"
+            >
               40 hour target reached
             </Tag>
           ) : (
-            <Tag color="blue" className="!m-0">
-              {`${(40 - total).toFixed(1)}h remaining`}
+            <Tag
+              color="blue"
+              className="!m-0"
+            >
+              {`${(40 - total).toFixed(
+                1
+              )}h remaining`}
             </Tag>
           )}
         </div>
