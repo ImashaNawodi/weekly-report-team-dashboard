@@ -301,7 +301,7 @@ Add `.env` to `.gitignore`:
 
 ## Live Application
 
-The application is currently deployed and can be accessed through the following link:
+The application is currently being prepared for deployment and will be available for online access in the near future.
 
 **Live Demo:** https://weekly-report-team-dashboard.vercel.app/
 
