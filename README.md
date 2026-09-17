@@ -170,7 +170,7 @@ The frontend and backend must be running in separate terminals.
 ```bash
 cd backend
 
-npm run start
+npm run dev
 ```
 
 The backend API will be available at:
