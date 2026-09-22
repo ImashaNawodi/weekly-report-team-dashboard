@@ -1,6 +1,6 @@
-
 import { useState, useCallback, useEffect } from "react";
-import { message } from "antd";
+import { message, Button, Card, Spin } from "antd";
+import { FolderOutlined, WarningOutlined } from "@ant-design/icons";
 
 import ReportMetaBar from "../components/ReportMetaBar";
 import ActionBar from "../components/ActionBar";
@@ -58,14 +58,19 @@ const getISOWeekNumber = (dateString) => {
 
   tempDate.setHours(0, 0, 0, 0);
 
-  tempDate.setDate(tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7));
+  tempDate.setDate(
+    tempDate.getDate() + 3 - ((tempDate.getDay() + 6) % 7),
+  );
 
   const week1 = new Date(tempDate.getFullYear(), 0, 4);
 
   return (
     1 +
     Math.round(
-      ((tempDate - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7,
+      ((tempDate - week1) / 86400000 -
+        3 +
+        ((week1.getDay() + 6) % 7)) /
+        7,
     )
   );
 };
@@ -140,7 +145,8 @@ const getDisplayStatus = (status) => {
 };
 
 const WeeklyReport = () => {
-  const isEditMode = sessionStorage.getItem("editingReport") === "true";
+  const isEditMode =
+    sessionStorage.getItem("editingReport") === "true";
 
   const editReportData = (() => {
     if (!isEditMode) {
@@ -187,7 +193,8 @@ const WeeklyReport = () => {
         : "",
 
       weekNumber:
-        editReportData.weekNumber || getISOWeekNumber(editReportData.weekStart),
+        editReportData.weekNumber ||
+        getISOWeekNumber(editReportData.weekStart),
 
       status: editReportData.status || "DRAFT",
 
@@ -207,7 +214,6 @@ const WeeklyReport = () => {
         editReportData.hours?.length > 0
           ? editReportData.hours.map((item) => ({
               ...item,
-
               id: item.id || item._id || createClientId(),
             }))
           : HOUR_TYPES.map((type) => ({
@@ -228,6 +234,8 @@ const WeeklyReport = () => {
 
   const [projectLoading, setProjectLoading] = useState(true);
 
+  const [projectError, setProjectError] = useState(null);
+
   const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -236,19 +244,25 @@ const WeeklyReport = () => {
     const fetchUserProject = async () => {
       try {
         setProjectLoading(true);
+        setProjectError(null);
 
         const response = await getUserProjectsService();
 
         if (!response?.success) {
-          throw new Error(response?.message || "Failed to load your project");
+          throw new Error(
+            response?.message || "Failed to load your project",
+          );
         }
 
         const projects = Array.isArray(response.data)
           ? response.data
-          : response.data?.projects || response.projects || [];
+          : response.data?.projects ||
+            response.projects ||
+            [];
 
         if (projects.length === 0) {
-          throw new Error("You are not assigned to a project.");
+          setAssignedProject(null);
+          return;
         }
 
         if (projects.length > 1) {
@@ -260,7 +274,9 @@ const WeeklyReport = () => {
         const userProject = projects[0];
 
         const projectId =
-          userProject?._id || userProject?.id || userProject?.projectID;
+          userProject?._id ||
+          userProject?.id ||
+          userProject?.projectID;
 
         if (!projectId) {
           throw new Error("Project ID is missing.");
@@ -270,7 +286,6 @@ const WeeklyReport = () => {
 
         setReport((current) => ({
           ...current,
-
           project: current.project || projectId,
         }));
       } catch (error) {
@@ -278,7 +293,9 @@ const WeeklyReport = () => {
 
         setAssignedProject(null);
 
-        message.error(error?.message || "Failed to load your project");
+        setProjectError(
+          error?.message || "Failed to load your project",
+        );
       } finally {
         setProjectLoading(false);
       }
@@ -329,32 +346,40 @@ const WeeklyReport = () => {
     setReport((current) => ({
       ...current,
 
-      tasks: (current.tasks || []).filter((task) => task.id !== taskId),
-    }));
-  }, []);
-
-  const handleTaskFieldChange = useCallback((taskId, field, value) => {
-    setReport((current) => ({
-      ...current,
-
-      tasks: (current.tasks || []).map((task) =>
-        task.id === taskId
-          ? {
-              ...task,
-              [field]: value,
-            }
-          : task,
+      tasks: (current.tasks || []).filter(
+        (task) => task.id !== taskId,
       ),
     }));
   }, []);
 
-  const handlePlannedTasksChange = useCallback((plannedTasks) => {
-    setReport((current) => ({
-      ...current,
+  const handleTaskFieldChange = useCallback(
+    (taskId, field, value) => {
+      setReport((current) => ({
+        ...current,
 
-      plannedTasks,
-    }));
-  }, []);
+        tasks: (current.tasks || []).map((task) =>
+          task.id === taskId
+            ? {
+                ...task,
+                [field]: value,
+              }
+            : task,
+        ),
+      }));
+    },
+    [],
+  );
+
+  const handlePlannedTasksChange = useCallback(
+    (plannedTasks) => {
+      setReport((current) => ({
+        ...current,
+
+        plannedTasks,
+      }));
+    },
+    [],
+  );
 
   const handleAddBlocker = useCallback(() => {
     const newBlocker = {
@@ -384,20 +409,23 @@ const WeeklyReport = () => {
     }));
   }, []);
 
-  const handleBlockerFieldChange = useCallback((blockerId, field, value) => {
-    setReport((current) => ({
-      ...current,
+  const handleBlockerFieldChange = useCallback(
+    (blockerId, field, value) => {
+      setReport((current) => ({
+        ...current,
 
-      blockers: (current.blockers || []).map((blocker) =>
-        blocker.id === blockerId
-          ? {
-              ...blocker,
-              [field]: value,
-            }
-          : blocker,
-      ),
-    }));
-  }, []);
+        blockers: (current.blockers || []).map((blocker) =>
+          blocker.id === blockerId
+            ? {
+                ...blocker,
+                [field]: value,
+              }
+            : blocker,
+        ),
+      }));
+    },
+    [],
+  );
 
   const handleKeyIssueChange = useCallback((blockerId) => {
     setReport((current) => ({
@@ -423,49 +451,62 @@ const WeeklyReport = () => {
     setReport((current) => ({
       ...current,
 
-      achievements: [...(current.achievements || []), newAchievement],
+      achievements: [
+        ...(current.achievements || []),
+        newAchievement,
+      ],
     }));
   }, []);
 
-  const handleDeleteAchievement = useCallback((achievementId) => {
-    setReport((current) => ({
-      ...current,
-
-      achievements: (current.achievements || []).filter(
-        (achievement) => achievement.id !== achievementId,
-      ),
-    }));
-  }, []);
-
-  const handleAchievementFieldChange = useCallback(
-    (achievementId, field, value) => {
+  const handleDeleteAchievement = useCallback(
+    (achievementId) => {
       setReport((current) => ({
         ...current,
 
-        achievements: (current.achievements || []).map((achievement) =>
-          achievement.id === achievementId
-            ? {
-                ...achievement,
-                [field]: value,
-              }
-            : achievement,
+        achievements: (current.achievements || []).filter(
+          (achievement) => achievement.id !== achievementId,
         ),
       }));
     },
     [],
   );
 
-  const handleKeyAchievementChange = useCallback((achievementId) => {
-    setReport((current) => ({
-      ...current,
+  const handleAchievementFieldChange = useCallback(
+    (achievementId, field, value) => {
+      setReport((current) => ({
+        ...current,
 
-      achievements: (current.achievements || []).map((achievement) => ({
-        ...achievement,
+        achievements: (current.achievements || []).map(
+          (achievement) =>
+            achievement.id === achievementId
+              ? {
+                  ...achievement,
+                  [field]: value,
+                }
+              : achievement,
+        ),
+      }));
+    },
+    [],
+  );
 
-        isKeyAchievement: achievement.id === achievementId,
-      })),
-    }));
-  }, []);
+  const handleKeyAchievementChange = useCallback(
+    (achievementId) => {
+      setReport((current) => ({
+        ...current,
+
+        achievements: (current.achievements || []).map(
+          (achievement) => ({
+            ...achievement,
+
+            isKeyAchievement:
+              achievement.id === achievementId,
+          }),
+        ),
+      }));
+    },
+    [],
+  );
 
   const handleHoursChange = useCallback((hours) => {
     setReport((current) => ({
@@ -493,14 +534,16 @@ const WeeklyReport = () => {
 
   const handleReportMetaChange = useCallback((updates) => {
     setReport((current) => {
-      const next = typeof updates === "function" ? updates(current) : updates;
+      const next =
+        typeof updates === "function"
+          ? updates(current)
+          : updates;
 
       return {
         ...current,
 
         ...next,
 
-        // Project is read-only
         project: current.project,
       };
     });
@@ -549,7 +592,9 @@ const WeeklyReport = () => {
   }, [report]);
 
   const handleSaveDraft = useCallback(async () => {
-    const hasInvalidTask = report.tasks?.some((task) => !task.name?.trim());
+    const hasInvalidTask = report.tasks?.some(
+      (task) => !task.name?.trim(),
+    );
 
     if (hasInvalidTask) {
       message.error("Task name is required for all tasks.");
@@ -558,7 +603,10 @@ const WeeklyReport = () => {
     }
 
     if (!report.project) {
-      showToast("error", "Project is still loading. Please wait.");
+      showToast(
+        "error",
+        "You are not assigned to a project.",
+      );
 
       return;
     }
@@ -571,13 +619,18 @@ const WeeklyReport = () => {
       let response;
 
       if (isEditMode && report.id) {
-        response = await updateReportService(report.id, payload);
+        response = await updateReportService(
+          report.id,
+          payload,
+        );
       } else {
         response = await createReportService(payload);
       }
 
       if (!response?.success) {
-        throw new Error(response?.message || "Failed to save report");
+        throw new Error(
+          response?.message || "Failed to save report",
+        );
       }
 
       const savedReport =
@@ -586,14 +639,20 @@ const WeeklyReport = () => {
         response?.report ||
         response;
 
-      const savedId = savedReport?._id || savedReport?.id || report.id;
+      const savedId =
+        savedReport?._id ||
+        savedReport?.id ||
+        report.id;
 
       setReport((current) => ({
         ...current,
 
         id: savedId,
 
-        status: savedReport?.status || current.status || "DRAFT",
+        status:
+          savedReport?.status ||
+          current.status ||
+          "DRAFT",
 
         lastSaved: new Date().toISOString(),
       }));
@@ -612,7 +671,10 @@ const WeeklyReport = () => {
     } catch (error) {
       console.error("Save report error:", error);
 
-      showToast("error", error?.message || "Failed to save report.");
+      showToast(
+        "error",
+        error?.message || "Failed to save report.",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -630,14 +692,104 @@ const WeeklyReport = () => {
     setShowPreviewModal(true);
   }, []);
 
+  if (projectLoading) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-gray-50">
+        <div className="flex flex-col items-center gap-4">
+          <Spin size="large" />
+
+          <p className="text-sm text-gray-500">
+            Loading your project...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (projectError) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-gray-50 px-4">
+        <Card
+          bordered={false}
+          className="w-full max-w-lg rounded-2xl shadow-sm"
+        >
+          <div className="flex flex-col items-center px-6 py-10 text-center">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-red-50">
+              <WarningOutlined className="text-4xl text-red-500" />
+            </div>
+
+            <h1 className="text-2xl font-bold text-gray-900">
+              Unable to Load Project
+            </h1>
+
+            <p className="mt-3 text-sm leading-6 text-gray-500">
+              {projectError}
+            </p>
+
+            <Button
+              type="primary"
+              size="large"
+              onClick={() =>
+                window.location.reload()
+              }
+              className="mt-6 h-11 rounded-lg px-6"
+            >
+              Try Again
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!assignedProject) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-gray-50 px-4">
+        <Card
+          bordered={false}
+          className="w-full max-w-lg rounded-2xl shadow-sm"
+        >
+          <div className="flex flex-col items-center px-6 py-10 text-center">
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-orange-50">
+              <FolderOutlined className="text-4xl text-orange-500" />
+            </div>
+
+            <h1 className="text-2xl font-bold text-gray-900">
+              No Project Assigned
+            </h1>
+
+            <p className="mt-3 max-w-md text-sm leading-6 text-gray-500">
+              You have not been assigned to a project yet.
+              Please contact your manager to get assigned to a
+              project before creating a weekly report.
+            </p>
+
+            <Button
+              type="primary"
+              size="large"
+              onClick={() =>
+                navigate("/manager-home/reports")
+              }
+              className="mt-6 h-11 rounded-lg px-6"
+            >
+              Back to Reports
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full p-6 space-y-6">
-      <ProjectSection project={assignedProject} loading={projectLoading} />
+    <div className="w-full space-y-6 p-6">
+      <ProjectSection
+        project={assignedProject}
+        loading={projectLoading}
+      />
 
       <ReportMetaBar
         report={{
           ...report,
-
           status: getDisplayStatus(report.status),
         }}
         project={assignedProject}
@@ -689,7 +841,7 @@ const WeeklyReport = () => {
         onSaveDraft={handleSaveDraft}
         onPreview={handlePreview}
         saving={isSaving}
-        disabled={projectLoading}
+        disabled={projectLoading || !assignedProject}
       />
 
       <PreviewModal
