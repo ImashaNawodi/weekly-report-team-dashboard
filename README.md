@@ -74,8 +74,13 @@ PORT=5000
 JWT_EXPIRES_IN=12h
 MAIL_USER=your_email@gmail.com
 MAIL_PASSWORD=your_email_app_password
-FRONTEND_URL=http://localhost:3000
+# Production: use your deployed Vercel frontend URL
+# Development: use http://localhost:3000
+FRONTEND_URL=https://<YOUR_VERCEL_FRONTEND_DOMAIN>
 SALT=samplevalue
+# Set to "production" when deployed on production server
+# For local development, remove it
+NODE_ENV=production
 ```
 
 ### Backend Variables
@@ -103,8 +108,9 @@ frontend/
 Add:
 
 ```env
-REACT_APP_API_URL=http://localhost:5000
-```
+# Production: use your deployed HTTPS backend URL
+# Development: use http://localhost:5000
+REACT_APP_API_URL=https://<YOUR_BACKEND_DOMAIN>```
 
 This variable specifies the backend API URL used by the React application.
 
@@ -299,9 +305,151 @@ Add `.env` to `.gitignore`:
 
 ---
 
+## Deployment Method
+
+The application is deployed using **Vercel for the frontend** and **AWS EC2 for the backend**. Nginx acts as a reverse proxy, while DuckDNS provides the backend hostname and Let's Encrypt provides HTTPS.
+
+### Deployment Architecture
+
+```text
+Vercel Frontend (HTTPS)
+        ↓
+DuckDNS Backend Domain (HTTPS)
+        ↓
+Nginx on AWS EC2
+        ↓
+Node.js / Express (:5000)
+        ↓
+MongoDB Atlas
+```
+
+### Deployment Prerequisites
+
+Before deployment, ensure the following are available:
+
+* GitHub repository
+* Vercel account
+* AWS account with an Ubuntu EC2 instance
+* MongoDB Atlas database
+* DuckDNS account
+* Node.js, npm, PM2, and Nginx
+* Certbot for HTTPS
+* Required production environment variables
+
+### Backend Deployment
+
+Connect to the EC2 instance and clone the repository:
+
+```bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+cd weekly-report-team-dashboard/backend
+npm install
+```
+
+Configure the backend `.env` file with the required database, authentication, email, and frontend URL settings.
+
+Start the backend with PM2:
+
+```bash
+pm2 start npm --name weekly-report-backend -- start
+pm2 save
+```
+
+The Node.js server runs internally on:
+
+```text
+http://127.0.0.1:5000
+```
+
+### Nginx Configuration
+
+Configure Nginx to forward requests to the Node.js server:
+
+```nginx
+server {
+    listen 80;
+    server_name <YOUR_BACKEND_DOMAIN>;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Test and restart Nginx:
+
+```bash
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+### DuckDNS and HTTPS
+
+Create a DuckDNS hostname and point it to the EC2 public IP.
+
+Install Certbot and configure Let's Encrypt:
+
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d <YOUR_BACKEND_DOMAIN>
+```
+
+Enable HTTP-to-HTTPS redirection when prompted.
+
+The backend will then be available through:
+
+```text
+https://<YOUR_BACKEND_DOMAIN>
+```
+
+### Frontend Deployment
+
+Deploy the frontend to Vercel and configure:
+
+```env
+REACT_APP_API_URL=https://<YOUR_BACKEND_DOMAIN>
+```
+
+For the backend, configure:
+
+```env
+FRONTEND_URL=https://<YOUR_VERCEL_FRONTEND_DOMAIN>
+```
+
+Redeploy the frontend after updating the environment variable.
+
+### AWS Security Group
+
+Allow only the required ports:
+
+| Port | Purpose |
+| ---- | ------- |
+| 22   | SSH     |
+| 80   | HTTP    |
+| 443  | HTTPS   |
+
+Port `5000` should remain internal and does not need to be publicly exposed.
+
+### Final Verification
+
+Verify the backend and Nginx:
+
+```bash
+pm2 list
+sudo nginx -t
+curl -I https://<YOUR_BACKEND_DOMAIN>/
+```
+
+The frontend should communicate with the backend using HTTPS without Mixed Content errors.
+
 ## Live Application
 
-The application is currently being prepared for deployment and will be available for online access in the near future.
+The application is currently deployed and available for online access through the following link:
+
 
 **Live Demo:** https://weekly-report-team-dashboard.vercel.app/
 
