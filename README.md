@@ -95,6 +95,8 @@ NODE_ENV=production
 | `MAIL_PASSWORD`  | Email app password                         |
 | `FRONTEND_URL`   | Frontend URL allowed by the backend        |
 | `SALT`           | Password hashing salt value                |
+| `NODE_ENV`       | Specifies the application environment      |
+
 
 ### Frontend Environment
 
