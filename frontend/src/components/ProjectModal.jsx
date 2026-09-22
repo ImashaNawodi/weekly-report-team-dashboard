@@ -26,6 +26,7 @@ export default function ProjectModal({
   onSuccess,
   members = [],
   editingProject,
+  handViewAllProjects
 }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -82,8 +83,10 @@ export default function ProjectModal({
           editingProject.projectID,
           projectData,
         );
+        await handViewAllProjects();
       } else {
         response = await createProjectService(projectData);
+        await handViewAllProjects();
       }
 
       if (!response.success) {

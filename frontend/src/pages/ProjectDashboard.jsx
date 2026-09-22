@@ -38,7 +38,7 @@ export default function ProjectsDashboard() {
   const [viewProject, setViewProject] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
-  const { members } = useMembers();
+  const { members , fetchAllUsers } = useMembers();
   
   useEffect(() => {
     handViewAllProjects();
@@ -62,45 +62,16 @@ export default function ProjectsDashboard() {
     }
   };
 
-  const handleProjectSuccess = (updatedProject) => {
-    if (!updatedProject?.projectID) {
-      return;
-    }
-
-    const projectWithMembers = {
-      ...updatedProject,
-      teamMembers: (updatedProject.teamMembers || []).map((memberId) => {
-        const member = members.find(
-          (item) =>
-            String(item?._id) === String(memberId) ||
-            String(item?.id) === String(memberId) ||
-            String(item?.userID) === String(memberId),
-        );
-
-        return member || memberId;
-      }),
-    };
-
-    setProjects((prevProjects) => {
-      const exists = prevProjects.some(
-        (project) =>
-          String(project?.projectID) === String(projectWithMembers.projectID),
-      );
-
-      if (exists) {
-        return prevProjects.map((project) =>
-          String(project?.projectID) === String(projectWithMembers.projectID)
-            ? projectWithMembers
-            : project,
-        );
-      }
-
-      return [projectWithMembers, ...prevProjects];
-    });
+  const handleProjectSuccess = async () => {
+  try {
+    await handViewAllProjects();
 
     setEditingProject(null);
     setModalOpen(false);
-  };
+  } catch (error) {
+    console.error("Failed to refresh projects:", error);
+  }
+};
   const filteredProjects = projects.filter((project) => {
     const query = searchQuery.toLowerCase().trim();
 
@@ -123,7 +94,8 @@ export default function ProjectsDashboard() {
     inactive: projects.filter((project) => project.isActive === false).length,
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
+    await fetchAllUsers();
     setEditingProject(null);
     setModalOpen(true);
   };
@@ -393,7 +365,6 @@ const updateProjectStatus = async (projectID, isActive) => {
 
       <div className="px-4 sm:px-6">
         <Card
-          bordered={false}
           styles={{
             body: {
               padding: 0,
@@ -481,6 +452,7 @@ const updateProjectStatus = async (projectID, isActive) => {
         onSuccess={handleProjectSuccess}
         editingProject={editingProject}
         members={availableMembers}
+        handViewAllProjects={handViewAllProjects}
       />
 
       <ProjectDetailDrawer
