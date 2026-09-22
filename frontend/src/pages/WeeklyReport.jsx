@@ -259,9 +259,7 @@ const WeeklyReport = () => {
 
         const projects = Array.isArray(response.data)
           ? response.data
-          : response.data?.projects ||
-            response.projects ||
-            [];
+          : response.data?.teamProjects ||[];
 
         if (projects.length === 0) {
           setAssignedProject(null);

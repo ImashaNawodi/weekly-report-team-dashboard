@@ -7,8 +7,8 @@ import {
   Settings,
   HelpCircle,
 } from "lucide-react";
-const mainNav = [
 
+const mainNav = [
   {
     key: "managerDashboard",
     label: "Manager Dashboard",
@@ -46,18 +46,17 @@ const bottomNav = [
     key: "settings",
     label: "Settings",
     icon: <Settings size={18} />,
-    roles: ["MANAGER", "TEAM_MEMBER","ADMIN"],
+    roles: ["MANAGER", "TEAM_MEMBER", "ADMIN"],
   },
   {
     key: "help",
     label: "Help & Support",
     icon: <HelpCircle size={18} />,
-    roles: ["MANAGER", "TEAM_MEMBER","ADMIN"],
+    roles: ["MANAGER", "TEAM_MEMBER", "ADMIN"],
   },
 ];
 
 const pageHeaders = {
-
   managerDashboard: {
     title: "Manager Dashboard",
     subtitle: "Overview of your team's activity",

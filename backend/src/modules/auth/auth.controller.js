@@ -63,7 +63,6 @@ const logoutController = (req, res) => {
 
 const authMeController = async (req, res) => {
   try {
-    console.log("authMeController: req.user:", req);
     const user = await authService.getAuthUser(req.user.id);
 
     res.status(200).json({

@@ -14,6 +14,7 @@ import CheckUser from "../pages/CheckUser";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import WeeklyReport from "../pages/WeeklyReport";
 import DashboardRedirect from "./DashboardRedirect";
+import Analytics from "../pages/Analytics";
 
 const AppRoutes = () => {
   return (
@@ -32,6 +33,7 @@ const AppRoutes = () => {
         <Route element={<RoleRoute allowedRoles={["MANAGER"]} />}>
           <Route path="projects" element={<ProjectDashboard />} />
           <Route path="managerDashboard" element={<ManagerDashboard />} />
+          <Route path="analytics" element={<Analytics />} />
         </Route>
 
         <Route element={<RoleRoute allowedRoles={["TEAM_MEMBER"]} />}>

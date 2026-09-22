@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   SearchOutlined,
@@ -63,10 +58,6 @@ const { RangePicker } = DatePicker;
 
 const PAGE_SIZE = 8;
 
-/* =========================================================
-   HELPER FUNCTIONS
-   ========================================================= */
-
 const getReportMember = (report) => {
   return (
     report?.user ||
@@ -122,9 +113,7 @@ const getMemberName = (report) => {
   }
 
   if (member.firstName || member.lastName) {
-    return `${member.firstName || ""} ${
-      member.lastName || ""
-    }`.trim();
+    return `${member.firstName || ""} ${member.lastName || ""}`.trim();
   }
 
   if (member.username) {
@@ -150,19 +139,13 @@ const getProjectId = (report) => {
   }
 
   return (
-    project._id ||
-    project.projectID ||
-    project.projectId ||
-    project.id ||
-    null
+    project._id || project.projectID || project.projectId || project.id || null
   );
 };
 
 const getProjectName = (report) => {
   return (
-    report?.project?.name ||
-    report?.project?.projectName ||
-    "Unknown Project"
+    report?.project?.name || report?.project?.projectName || "Unknown Project"
   );
 };
 
@@ -180,10 +163,6 @@ const formatDate = (date) => {
   return parsed.format("DD MMM YYYY");
 };
 
-/* =========================================================
-   COMPONENT
-   ========================================================= */
-
 const ManagerDashboard = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -192,8 +171,7 @@ const ManagerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [projectFilter, setProjectFilter] = useState("all");
-  const [teamMemberFilter, setTeamMemberFilter] =
-    useState("all");
+  const [teamMemberFilter, setTeamMemberFilter] = useState("all");
   const [weekFilter, setWeekFilter] = useState("all");
   const [dateRange, setDateRange] = useState(null);
 
@@ -202,14 +180,8 @@ const ManagerDashboard = () => {
   const [viewReport, setViewReport] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const [reportModalOpen, setReportModalOpen] =
-    useState(false);
-  const [editingReport, setEditingReport] =
-    useState(null);
-
-  /* =========================================================
-     FETCH REPORTS
-     ========================================================= */
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [editingReport, setEditingReport] = useState(null);
 
   const fetchReports = useCallback(async () => {
     try {
@@ -219,20 +191,14 @@ const ManagerDashboard = () => {
       const response = await getAllReportsService();
 
       if (!response.success) {
-        throw new Error(
-          response.message || "Failed to fetch reports",
-        );
+        throw new Error(response.message || "Failed to fetch reports");
       }
 
       const allReports = response.data?.reports || [];
 
       setReports(allReports);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to fetch reports",
-      );
+      setError(err instanceof Error ? err.message : "Failed to fetch reports");
     } finally {
       setLoading(false);
     }
@@ -241,10 +207,6 @@ const ManagerDashboard = () => {
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
-
-  /* =========================================================
-     MODAL / DRAWER
-     ========================================================= */
 
   const handleCloseReportModal = () => {
     setReportModalOpen(false);
@@ -267,84 +229,56 @@ const ManagerDashboard = () => {
     setViewReport(null);
   };
 
-  /* =========================================================
-     REPORT ACTIONS
-     ========================================================= */
-
   const handleApproveReport = async (report) => {
     try {
-      const response = await approveReportService(
+      const response = await approveReportService(report._id);
+
+      if (!response.success) {
+        throw new Error(response.message || "Failed to approve report");
+      }
+
+      notification.success({
+        message: response.message || "Report approved successfully",
+        placement: "bottomRight",
+      });
+
+      await fetchReports();
+    } catch (error) {
+      notification.error({
+        message: error?.message || "Failed to approve report",
+        placement: "bottomRight",
+      });
+
+      throw error;
+    }
+  };
+
+  const handleRequestCorrection = async (report, managerFeedback) => {
+    try {
+      const response = await requestCorrectionService(
         report._id,
+        managerFeedback,
       );
 
       if (!response.success) {
-        throw new Error(
-          response.message ||
-            "Failed to approve report",
-        );
+        throw new Error(response.message || "Failed to request correction");
       }
 
       notification.success({
-        message:
-          response.message ||
-          "Report approved successfully",
+        message: response.message || "Report sent back for correction",
         placement: "bottomRight",
       });
 
       await fetchReports();
     } catch (error) {
       notification.error({
-        message:
-          error?.message ||
-          "Failed to approve report",
+        message: error?.message || "Failed to request correction",
         placement: "bottomRight",
       });
 
       throw error;
     }
   };
-
-  const handleRequestCorrection = async (
-    report,
-    managerFeedback,
-  ) => {
-    try {
-      const response =
-        await requestCorrectionService(
-          report._id,
-          managerFeedback,
-        );
-
-      if (!response.success) {
-        throw new Error(
-          response.message ||
-            "Failed to request correction",
-        );
-      }
-
-      notification.success({
-        message:
-          response.message ||
-          "Report sent back for correction",
-        placement: "bottomRight",
-      });
-
-      await fetchReports();
-    } catch (error) {
-      notification.error({
-        message:
-          error?.message ||
-          "Failed to request correction",
-        placement: "bottomRight",
-      });
-
-      throw error;
-    }
-  };
-
-  /* =========================================================
-     PROJECTS
-     ========================================================= */
 
   const uniqueProjects = useMemo(() => {
     return Array.from(
@@ -373,10 +307,6 @@ const ManagerDashboard = () => {
     );
   }, [reports]);
 
-  /* =========================================================
-     TEAM MEMBERS
-     ========================================================= */
-
   const uniqueTeamMembers = useMemo(() => {
     return Array.from(
       new Map(
@@ -401,36 +331,25 @@ const ManagerDashboard = () => {
     );
   }, [reports]);
 
-  /* =========================================================
-     AVAILABLE WEEKS
-     ========================================================= */
-
   const availableWeeks = useMemo(() => {
     return Array.from(
       new Map(
         reports
-          .filter(
-            (report) => report.status !== "DRAFT",
-          )
+          .filter((report) => report.status !== "DRAFT")
           .filter(
             (report) =>
-              report.weekNumber !== undefined &&
-              report.weekNumber !== null,
+              report.weekNumber !== undefined && report.weekNumber !== null,
           )
           .map((report) => [
             Number(report.weekNumber),
             {
-              weekNumber: Number(
-                report.weekNumber,
-              ),
+              weekNumber: Number(report.weekNumber),
               weekStart: report.weekStart,
               weekEnd: report.weekEnd,
             },
           ]),
       ).values(),
-    ).sort(
-      (a, b) => a.weekNumber - b.weekNumber,
-    );
+    ).sort((a, b) => a.weekNumber - b.weekNumber);
   }, [reports]);
 
   const weekOptions = [
@@ -445,14 +364,8 @@ const ManagerDashboard = () => {
   ];
 
   const selectedWeek = availableWeeks.find(
-    (week) =>
-      Number(week.weekNumber) ===
-      Number(weekFilter),
+    (week) => Number(week.weekNumber) === Number(weekFilter),
   );
-
-  /* =========================================================
-     WEEK REPORTS
-     ========================================================= */
 
   const weekScopedReports = useMemo(() => {
     return reports.filter((report) => {
@@ -461,16 +374,10 @@ const ManagerDashboard = () => {
       }
 
       return (
-        weekFilter === "all" ||
-        Number(report.weekNumber) ===
-          Number(weekFilter)
+        weekFilter === "all" || Number(report.weekNumber) === Number(weekFilter)
       );
     });
   }, [reports, weekFilter]);
-
-  /* =========================================================
-     STATISTICS
-     ========================================================= */
 
   const stats = useMemo(() => {
     return {
@@ -492,105 +399,63 @@ const ManagerDashboard = () => {
     };
   }, [weekScopedReports]);
 
-  /* =========================================================
-     FILTERED REPORTS
-     ========================================================= */
-
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
       if (report.status === "DRAFT") {
         return false;
       }
 
-      const query = searchQuery
-        .toLowerCase()
-        .trim();
+      const query = searchQuery.toLowerCase().trim();
 
       const projectName = getProjectName(report);
 
-      const reportNumber = String(
-        report.reportNumber || "",
-      );
+      const reportNumber = String(report.reportNumber || "");
 
-      const workCompleted = String(
-        report.workCompleted || "",
-      );
+      const workCompleted = String(report.workCompleted || "");
 
       const memberName = getMemberName(report);
 
       const matchesSearch =
         !query ||
-        reportNumber
-          .toLowerCase()
-          .includes(query) ||
-        projectName
-          .toLowerCase()
-          .includes(query) ||
-        workCompleted
-          .toLowerCase()
-          .includes(query) ||
-        memberName
-          .toLowerCase()
-          .includes(query);
+        reportNumber.toLowerCase().includes(query) ||
+        projectName.toLowerCase().includes(query) ||
+        workCompleted.toLowerCase().includes(query) ||
+        memberName.toLowerCase().includes(query);
 
       const matchesStatus =
-        statusFilter === "all" ||
-        report.status === statusFilter;
+        statusFilter === "all" || report.status === statusFilter;
 
-      const reportProjectId =
-        getProjectId(report);
+      const reportProjectId = getProjectId(report);
 
       const matchesProject =
         projectFilter === "all" ||
-        String(reportProjectId) ===
-          String(projectFilter);
+        String(reportProjectId) === String(projectFilter);
 
-      const reportMemberId =
-        getMemberId(report);
+      const reportMemberId = getMemberId(report);
 
       const matchesTeamMember =
         teamMemberFilter === "all" ||
-        String(reportMemberId) ===
-          String(teamMemberFilter);
+        String(reportMemberId) === String(teamMemberFilter);
 
       const matchesWeek =
         weekFilter === "all" ||
-        Number(report.weekNumber) ===
-          Number(weekFilter);
+        Number(report.weekNumber) === Number(weekFilter);
 
       let matchesDate = true;
 
-      if (
-        dateRange &&
-        dateRange.length === 2
-      ) {
-        const [startDate, endDate] =
-          dateRange;
+      if (dateRange && dateRange.length === 2) {
+        const [startDate, endDate] = dateRange;
 
-        const reportDate = dayjs(
-          report.weekStart,
-        );
+        const reportDate = dayjs(report.weekStart);
 
         if (!reportDate.isValid()) {
           matchesDate = false;
         } else {
           matchesDate =
-            reportDate.isSame(
-              startDate,
-              "day",
-            ) ||
-            reportDate.isSame(
-              endDate,
-              "day",
-            ) ||
-            (reportDate.isAfter(
-              startDate,
-              "day",
-            ) &&
-              reportDate.isBefore(
-                endDate,
-                "day",
-              ));
+            reportDate.isSame(startDate, "day") ||
+            reportDate.isSame(endDate, "day") ||
+            (reportDate.isAfter(startDate, "day") &&
+              reportDate.isBefore(endDate, "day"));
         }
       }
 
@@ -613,21 +478,11 @@ const ManagerDashboard = () => {
     dateRange,
   ]);
 
-  /* =========================================================
-     WEEK MEMBER COUNT
-     ========================================================= */
-
   const selectedWeekMemberCount = useMemo(() => {
     return new Set(
-      weekScopedReports.map((report) =>
-        String(getMemberId(report)),
-      ),
+      weekScopedReports.map((report) => String(getMemberId(report))),
     ).size;
   }, [weekScopedReports]);
-
-  /* =========================================================
-     RESET PAGINATION
-     ========================================================= */
 
   useEffect(() => {
     setCurrentPage(1);
@@ -640,16 +495,11 @@ const ManagerDashboard = () => {
     dateRange,
   ]);
 
-  /* =========================================================
-     STATUS CHART
-     ========================================================= */
-
   const statusChartData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const memberName =
-        getMemberName(report);
+      const memberName = getMemberName(report);
 
       if (!dataMap.has(memberName)) {
         dataMap.set(memberName, {
@@ -671,44 +521,29 @@ const ManagerDashboard = () => {
       }
 
       if (
-        report.status ===
-          "NEEDS_CORRECTION" ||
-        report.status ===
-          "CORRECTION_REQUIRED"
+        report.status === "NEEDS_CORRECTION" ||
+        report.status === "CORRECTION_REQUIRED"
       ) {
         item.correction += 1;
       }
     });
 
-    return Array.from(
-      dataMap.values(),
-    ).sort(
+    return Array.from(dataMap.values()).sort(
       (a, b) =>
         b.submitted +
         b.approved +
         b.correction -
-        (a.submitted +
-          a.approved +
-          a.correction),
+        (a.submitted + a.approved + a.correction),
     );
   }, [weekScopedReports]);
-
-  /* =========================================================
-     REPORT TREND
-     ========================================================= */
 
   const reportsTrendData = useMemo(() => {
     const dataMap = new Map();
 
     reports
-      .filter(
-        (report) =>
-          report.status !== "DRAFT",
-      )
+      .filter((report) => report.status !== "DRAFT")
       .forEach((report) => {
-        const week = Number(
-          report.weekNumber,
-        );
+        const week = Number(report.weekNumber);
 
         if (!Number.isFinite(week)) {
           return;
@@ -734,18 +569,14 @@ const ManagerDashboard = () => {
         }
 
         if (
-          report.status ===
-            "NEEDS_CORRECTION" ||
-          report.status ===
-            "CORRECTION_REQUIRED"
+          report.status === "NEEDS_CORRECTION" ||
+          report.status === "CORRECTION_REQUIRED"
         ) {
           item.correction += 1;
         }
       });
 
-    return Array.from(
-      dataMap.values(),
-    )
+    return Array.from(dataMap.values())
       .sort((a, b) => a.week - b.week)
       .map((item) => ({
         ...item,
@@ -753,97 +584,52 @@ const ManagerDashboard = () => {
       }));
   }, [reports]);
 
-  /* =========================================================
-     PROJECT WORKLOAD
-     ========================================================= */
-
   const projectWorkloadData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const projectName =
-        getProjectName(report);
+      const projectName = getProjectName(report);
 
-      dataMap.set(
-        projectName,
-        (dataMap.get(projectName) || 0) +
-          1,
-      );
+      dataMap.set(projectName, (dataMap.get(projectName) || 0) + 1);
     });
 
-    return Array.from(
-      dataMap.entries(),
-    )
+    return Array.from(dataMap.entries())
       .map(([name, reportsCount]) => ({
         name,
         reports: reportsCount,
       }))
-      .sort(
-        (a, b) => b.reports - a.reports,
-      );
+      .sort((a, b) => b.reports - a.reports);
   }, [weekScopedReports]);
-
-  /* =========================================================
-     MEMBER WORKLOAD
-     ========================================================= */
 
   const memberWorkloadData = useMemo(() => {
     const dataMap = new Map();
 
     weekScopedReports.forEach((report) => {
-      const memberName =
-        getMemberName(report);
+      const memberName = getMemberName(report);
 
-      dataMap.set(
-        memberName,
-        (dataMap.get(memberName) || 0) +
-          1,
-      );
+      dataMap.set(memberName, (dataMap.get(memberName) || 0) + 1);
     });
 
-    return Array.from(
-      dataMap.entries(),
-    )
+    return Array.from(dataMap.entries())
       .map(([name, reportsCount]) => ({
         name,
         reports: reportsCount,
       }))
-      .sort(
-        (a, b) => b.reports - a.reports,
-      );
+      .sort((a, b) => b.reports - a.reports);
   }, [weekScopedReports]);
-
-  /* =========================================================
-     RECENT ACTIVITY
-     ========================================================= */
 
   const recentActivity = useMemo(() => {
     return [...reports]
-      .filter(
-        (report) =>
-          report.status !== "DRAFT",
-      )
+      .filter((report) => report.status !== "DRAFT")
       .sort((a, b) => {
-        const dateA = new Date(
-          a.updatedAt ||
-            a.createdAt ||
-            0,
-        ).getTime();
+        const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
 
-        const dateB = new Date(
-          b.updatedAt ||
-            b.createdAt ||
-            0,
-        ).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
 
         return dateB - dateA;
       })
       .slice(0, 6);
   }, [reports]);
-
-  /* =========================================================
-     STATUS
-     ========================================================= */
 
   const renderStatus = (status) => {
     switch (status) {
@@ -873,9 +659,7 @@ const ManagerDashboard = () => {
       case "CORRECTION_REQUIRED":
         return (
           <Tag
-            icon={
-              <ExclamationCircleOutlined />
-            }
+            icon={<ExclamationCircleOutlined />}
             color="warning"
             className="rounded-md px-2 py-1"
           >
@@ -884,17 +668,9 @@ const ManagerDashboard = () => {
         );
 
       default:
-        return (
-          <Tag color="default">
-            {status || "Unknown"}
-          </Tag>
-        );
+        return <Tag color="default">{status || "Unknown"}</Tag>;
     }
   };
-
-  /* =========================================================
-     ACTIVITY HELPERS
-     ========================================================= */
 
   const getActivityIcon = (status) => {
     if (status === "APPROVED") {
@@ -905,10 +681,7 @@ const ManagerDashboard = () => {
       );
     }
 
-    if (
-      status === "NEEDS_CORRECTION" ||
-      status === "CORRECTION_REQUIRED"
-    ) {
+    if (status === "NEEDS_CORRECTION" || status === "CORRECTION_REQUIRED") {
       return (
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-50">
           <ExclamationCircleOutlined className="text-orange-500" />
@@ -924,15 +697,11 @@ const ManagerDashboard = () => {
   };
 
   const getActivityText = (report) => {
-    const memberName =
-      getMemberName(report);
+    const memberName = getMemberName(report);
 
-    const reportNumber =
-      report.reportNumber || "Report";
+    const reportNumber = report.reportNumber || "Report";
 
-    const weekText = report.weekNumber
-      ? `Week ${report.weekNumber}`
-      : "";
+    const weekText = report.weekNumber ? `Week ${report.weekNumber}` : "";
 
     if (report.status === "APPROVED") {
       return `${memberName}'s ${weekText} report was approved`;
@@ -949,9 +718,7 @@ const ManagerDashboard = () => {
   };
 
   const formatActivityDate = (report) => {
-    const date =
-      report.updatedAt ||
-      report.createdAt;
+    const date = report.updatedAt || report.createdAt;
 
     if (!date) {
       return "Recently";
@@ -963,14 +730,8 @@ const ManagerDashboard = () => {
       return "Recently";
     }
 
-    return parsed.format(
-      "DD MMM YYYY, hh:mm A",
-    );
+    return parsed.format("DD MMM YYYY, hh:mm A");
   };
-
-  /* =========================================================
-     TABLE COLUMNS
-     ========================================================= */
 
   const columns = [
     {
@@ -985,9 +746,7 @@ const ManagerDashboard = () => {
           </span>
 
           <span className="text-xs text-slate-500">
-            {report.weekNumber
-              ? `Week ${report.weekNumber}`
-              : "—"}
+            {report.weekNumber ? `Week ${report.weekNumber}` : "—"}
           </span>
         </div>
       ),
@@ -999,8 +758,7 @@ const ManagerDashboard = () => {
       width: 200,
 
       render: (_, report) => {
-        const memberName =
-          getMemberName(report);
+        const memberName = getMemberName(report);
 
         return (
           <div className="flex items-center gap-2">
@@ -1024,8 +782,7 @@ const ManagerDashboard = () => {
       width: 200,
 
       render: (_, report) => {
-        const projectName =
-          getProjectName(report);
+        const projectName = getProjectName(report);
 
         return (
           <div className="flex items-center gap-2">
@@ -1051,14 +808,11 @@ const ManagerDashboard = () => {
       render: (_, report) => (
         <div className="flex flex-col text-sm">
           <span className="font-medium text-slate-700">
-            {report.weekNumber
-              ? `Week ${report.weekNumber}`
-              : "—"}
+            {report.weekNumber ? `Week ${report.weekNumber}` : "—"}
           </span>
 
           <span className="text-xs text-slate-400">
-            {formatDate(report.weekStart)} -{" "}
-            {formatDate(report.weekEnd)}
+            {formatDate(report.weekStart)} - {formatDate(report.weekEnd)}
           </span>
         </div>
       ),
@@ -1069,8 +823,7 @@ const ManagerDashboard = () => {
       key: "status",
       width: 180,
 
-      render: (_, report) =>
-        renderStatus(report.status),
+      render: (_, report) => renderStatus(report.status),
     },
 
     {
@@ -1101,10 +854,6 @@ const ManagerDashboard = () => {
       ),
     },
   ];
-
-  /* =========================================================
-     FILTERS
-     ========================================================= */
 
   const statusItems = [
     {
@@ -1146,10 +895,6 @@ const ManagerDashboard = () => {
     weekFilter !== "all" ||
     Boolean(dateRange);
 
-  /* =========================================================
-     LOADING
-     ========================================================= */
-
   if (loading) {
     return (
       <div className="flex min-h-[500px] items-center justify-center">
@@ -1158,32 +903,19 @@ const ManagerDashboard = () => {
     );
   }
 
-  /* =========================================================
-     ERROR
-     ========================================================= */
-
   if (error) {
     return (
       <div className="flex min-h-[500px] flex-col items-center justify-center gap-4">
         <ExclamationCircleOutlined className="text-4xl text-red-500" />
 
-        <p className="text-center text-slate-600">
-          {error}
-        </p>
+        <p className="text-center text-slate-600">{error}</p>
 
-        <Button
-          type="primary"
-          onClick={fetchReports}
-        >
+        <Button type="primary" onClick={fetchReports}>
           Try Again
         </Button>
       </div>
     );
   }
-
-  /* =========================================================
-     UI
-     ========================================================= */
 
   return (
     <div className="min-h-full bg-slate-50 p-4 sm:p-6 lg:p-8">
@@ -1201,8 +933,8 @@ const ManagerDashboard = () => {
             </div>
 
             <p className="m-0 text-sm text-slate-500">
-              Select a reporting week to view all
-              team members' submitted reports.
+              Select a reporting week to view all team members' submitted
+              reports.
             </p>
           </div>
 
@@ -1215,9 +947,7 @@ const ManagerDashboard = () => {
                 setDateRange(null);
               }}
               className="w-full lg:w-[260px]"
-              suffixIcon={
-                <CalendarOutlined />
-              }
+              suffixIcon={<CalendarOutlined />}
               options={weekOptions}
               showSearch
               optionFilterProp="label"
@@ -1225,45 +955,27 @@ const ManagerDashboard = () => {
 
             {selectedWeek && (
               <div className="flex flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap">
-                <Tag
-                  color="blue"
-                  className="m-0 rounded-md px-3 py-1"
-                >
+                <Tag color="blue" className="m-0 rounded-md px-3 py-1">
                   Week {selectedWeek.weekNumber}
                 </Tag>
 
                 <span className="text-sm text-slate-500">
-                  {formatDate(
-                    selectedWeek.weekStart,
-                  )}{" "}
-                  -{" "}
-                  {formatDate(
-                    selectedWeek.weekEnd,
-                  )}
+                  {formatDate(selectedWeek.weekStart)} -{" "}
+                  {formatDate(selectedWeek.weekEnd)}
                 </span>
 
                 <span className="text-sm font-medium text-slate-700">
-                  {selectedWeekMemberCount} team
-                  member
-                  {selectedWeekMemberCount !==
-                  1
-                    ? "s"
-                    : ""}{" "}
-                  · {weekScopedReports.length}{" "}
-                  report
-                  {weekScopedReports.length !==
-                  1
-                    ? "s"
-                    : ""}
+                  {selectedWeekMemberCount} team member
+                  {selectedWeekMemberCount !== 1 ? "s" : ""} ·{" "}
+                  {weekScopedReports.length} report
+                  {weekScopedReports.length !== 1 ? "s" : ""}
                 </span>
 
                 <Button
                   type="text"
                   size="small"
                   icon={<CloseOutlined />}
-                  onClick={() =>
-                    setWeekFilter("all")
-                  }
+                  onClick={() => setWeekFilter("all")}
                   className="flex-shrink-0 text-slate-400 hover:text-red-500"
                 />
               </div>
@@ -1274,18 +986,13 @@ const ManagerDashboard = () => {
 
       {/* STATISTICS */}
 
-      <Row
-        gutter={[16, 16]}
-        className="mb-6 items-stretch"
-      >
+      <Row gutter={[16, 16]} className="mb-6 items-stretch">
         <Col xs={24} sm={12} lg={6}>
           <Card className="h-full rounded-xl border-0 shadow-sm">
             <Statistic
               title="Total Reports"
               value={stats.total}
-              prefix={
-                <FileTextOutlined className="text-blue-500" />
-              }
+              prefix={<FileTextOutlined className="text-blue-500" />}
             />
           </Card>
         </Col>
@@ -1295,9 +1002,7 @@ const ManagerDashboard = () => {
             <Statistic
               title="Submitted"
               value={stats.submitted}
-              prefix={
-                <ClockCircleOutlined className="text-blue-500" />
-              }
+              prefix={<ClockCircleOutlined className="text-blue-500" />}
             />
           </Card>
         </Col>
@@ -1307,9 +1012,7 @@ const ManagerDashboard = () => {
             <Statistic
               title="Approved"
               value={stats.approved}
-              prefix={
-                <CheckCircleOutlined className="text-green-500" />
-              }
+              prefix={<CheckCircleOutlined className="text-green-500" />}
             />
           </Card>
         </Col>
@@ -1319,9 +1022,7 @@ const ManagerDashboard = () => {
             <Statistic
               title="Needs Correction"
               value={stats.correction}
-              prefix={
-                <ExclamationCircleOutlined className="text-orange-500" />
-              }
+              prefix={<ExclamationCircleOutlined className="text-orange-500" />}
             />
           </Card>
         </Col>
@@ -1347,21 +1048,15 @@ const ManagerDashboard = () => {
               </div>
             }
           >
-            {statusChartData.length ===
-            0 ? (
+            {statusChartData.length === 0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={
-                    Empty.PRESENTED_IMAGE_SIMPLE
-                  }
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
                   description="No report status data available"
                 />
               </div>
             ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={320}
-              >
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart
                   data={statusChartData}
                   margin={{
@@ -1371,10 +1066,7 @@ const ManagerDashboard = () => {
                     bottom: 10,
                   }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
                   <XAxis
                     dataKey="name"
@@ -1435,21 +1127,15 @@ const ManagerDashboard = () => {
               </div>
             }
           >
-            {reportsTrendData.length ===
-            0 ? (
+            {reportsTrendData.length === 0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={
-                    Empty.PRESENTED_IMAGE_SIMPLE
-                  }
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
                   description="No trend data available"
                 />
               </div>
             ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={320}
-              >
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart
                   data={reportsTrendData}
                   margin={{
@@ -1459,10 +1145,7 @@ const ManagerDashboard = () => {
                     bottom: 10,
                   }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
 
                   <XAxis
                     dataKey="name"
@@ -1533,21 +1216,15 @@ const ManagerDashboard = () => {
               </div>
             }
           >
-            {projectWorkloadData.length ===
-            0 ? (
+            {projectWorkloadData.length === 0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={
-                    Empty.PRESENTED_IMAGE_SIMPLE
-                  }
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
                   description="No project workload data"
                 />
               </div>
             ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={320}
-              >
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart
                   data={projectWorkloadData}
                   layout="vertical"
@@ -1558,15 +1235,9 @@ const ManagerDashboard = () => {
                     bottom: 10,
                   }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
 
-                  <XAxis
-                    type="number"
-                    allowDecimals={false}
-                  />
+                  <XAxis type="number" allowDecimals={false} />
 
                   <YAxis
                     type="category"
@@ -1583,12 +1254,7 @@ const ManagerDashboard = () => {
                     dataKey="reports"
                     name="Reports"
                     fill="#6366f1"
-                    radius={[
-                      0,
-                      5,
-                      5,
-                      0,
-                    ]}
+                    radius={[0, 5, 5, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1611,21 +1277,15 @@ const ManagerDashboard = () => {
               </div>
             }
           >
-            {memberWorkloadData.length ===
-            0 ? (
+            {memberWorkloadData.length === 0 ? (
               <div className="flex h-[320px] items-center justify-center">
                 <Empty
-                  image={
-                    Empty.PRESENTED_IMAGE_SIMPLE
-                  }
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
                   description="No team workload data"
                 />
               </div>
             ) : (
-              <ResponsiveContainer
-                width="100%"
-                height={320}
-              >
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart
                   data={memberWorkloadData}
                   layout="vertical"
@@ -1636,15 +1296,9 @@ const ManagerDashboard = () => {
                     bottom: 10,
                   }}
                 >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    horizontal={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
 
-                  <XAxis
-                    type="number"
-                    allowDecimals={false}
-                  />
+                  <XAxis type="number" allowDecimals={false} />
 
                   <YAxis
                     type="category"
@@ -1661,12 +1315,7 @@ const ManagerDashboard = () => {
                     dataKey="reports"
                     name="Reports"
                     fill="#8b5cf6"
-                    radius={[
-                      0,
-                      5,
-                      5,
-                      0,
-                    ]}
+                    radius={[0, 5, 5, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -1693,21 +1342,14 @@ const ManagerDashboard = () => {
       >
         {recentActivity.length === 0 ? (
           <Empty
-            image={
-              Empty.PRESENTED_IMAGE_SIMPLE
-            }
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
             description="No recent activity"
           />
         ) : (
           <div className="divide-y divide-slate-100">
             {recentActivity.map((report) => (
-              <div
-                key={report._id}
-                className="flex items-center gap-4 py-4"
-              >
-                {getActivityIcon(
-                  report.status,
-                )}
+              <div key={report._id} className="flex items-center gap-4 py-4">
+                {getActivityIcon(report.status)}
 
                 <div className="min-w-0 flex-1">
                   <p className="m-0 truncate text-sm font-medium text-slate-700">
@@ -1717,22 +1359,16 @@ const ManagerDashboard = () => {
                   <p className="m-0 mt-1 text-xs text-slate-400">
                     {getProjectName(report)}
 
-                    {report.reportNumber
-                      ? ` · ${report.reportNumber}`
-                      : ""}
+                    {report.reportNumber ? ` · ${report.reportNumber}` : ""}
                   </p>
                 </div>
 
                 <div className="hidden sm:block">
-                  {renderStatus(
-                    report.status,
-                  )}
+                  {renderStatus(report.status)}
                 </div>
 
                 <span className="whitespace-nowrap text-xs text-slate-400">
-                  {formatActivityDate(
-                    report,
-                  )}
+                  {formatActivityDate(report)}
                 </span>
               </div>
             ))}
@@ -1756,16 +1392,10 @@ const ManagerDashboard = () => {
               <Input
                 allowClear
                 size="large"
-                prefix={
-                  <SearchOutlined className="text-slate-400" />
-                }
+                prefix={<SearchOutlined className="text-slate-400" />}
                 placeholder="Search reports, projects, members..."
                 value={searchQuery}
-                onChange={(event) =>
-                  setSearchQuery(
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => setSearchQuery(event.target.value)}
                 className="rounded-lg"
               />
             </div>
@@ -1777,9 +1407,7 @@ const ManagerDashboard = () => {
                 onChange={setStatusFilter}
                 options={statusItems}
                 className="w-full"
-                suffixIcon={
-                  <FilterOutlined />
-                }
+                suffixIcon={<FilterOutlined />}
               />
             </div>
 
@@ -1790,9 +1418,7 @@ const ManagerDashboard = () => {
                 onChange={setProjectFilter}
                 className="w-full"
                 placeholder="Select Project"
-                suffixIcon={
-                  <FilterOutlined />
-                }
+                suffixIcon={<FilterOutlined />}
                 showSearch
                 optionFilterProp="label"
                 options={[
@@ -1800,12 +1426,10 @@ const ManagerDashboard = () => {
                     value: "all",
                     label: "All Projects",
                   },
-                  ...uniqueProjects.map(
-                    (project) => ({
-                      value: project.id,
-                      label: project.name,
-                    }),
-                  ),
+                  ...uniqueProjects.map((project) => ({
+                    value: project.id,
+                    label: project.name,
+                  })),
                 ]}
               />
             </div>
@@ -1814,14 +1438,10 @@ const ManagerDashboard = () => {
               <Select
                 size="large"
                 value={teamMemberFilter}
-                onChange={
-                  setTeamMemberFilter
-                }
+                onChange={setTeamMemberFilter}
                 className="w-full"
                 placeholder="Team Member"
-                suffixIcon={
-                  <UserOutlined />
-                }
+                suffixIcon={<UserOutlined />}
                 showSearch
                 optionFilterProp="label"
                 options={[
@@ -1829,12 +1449,10 @@ const ManagerDashboard = () => {
                     value: "all",
                     label: "All Team Members",
                   },
-                  ...uniqueTeamMembers.map(
-                    (member) => ({
-                      value: member.id,
-                      label: member.name,
-                    }),
-                  ),
+                  ...uniqueTeamMembers.map((member) => ({
+                    value: member.id,
+                    label: member.name,
+                  })),
                 ]}
               />
             </div>
@@ -1843,18 +1461,11 @@ const ManagerDashboard = () => {
               <RangePicker
                 size="large"
                 value={dateRange}
-                onChange={(dates) =>
-                  setDateRange(dates)
-                }
+                onChange={(dates) => setDateRange(dates)}
                 className="w-full rounded-lg"
                 format="DD MMM YYYY"
-                placeholder={[
-                  "Start Date",
-                  "End Date",
-                ]}
-                suffixIcon={
-                  <CalendarOutlined />
-                }
+                placeholder={["Start Date", "End Date"]}
+                suffixIcon={<CalendarOutlined />}
                 allowClear
               />
             </div>
@@ -1895,9 +1506,7 @@ const ManagerDashboard = () => {
 
               <p className="text-sm text-slate-500">
                 {selectedWeek
-                  ? `${formatDate(
-                      selectedWeek.weekStart,
-                    )} - ${formatDate(
+                  ? `${formatDate(selectedWeek.weekStart)} - ${formatDate(
                       selectedWeek.weekEnd,
                     )}`
                   : "Review submitted weekly reports"}
@@ -1906,22 +1515,14 @@ const ManagerDashboard = () => {
 
             <div className="flex items-center gap-2">
               {selectedWeek && (
-                <Tag
-                  color="blue"
-                  className="m-0 rounded-md px-3 py-1"
-                >
-                  {selectedWeekMemberCount}{" "}
-                  Members
+                <Tag color="blue" className="m-0 rounded-md px-3 py-1">
+                  {selectedWeekMemberCount} Members
                 </Tag>
               )}
 
               <span className="text-sm text-slate-400">
-                {filteredReports.length}{" "}
-                report
-                {filteredReports.length !==
-                1
-                  ? "s"
-                  : ""}
+                {filteredReports.length} report
+                {filteredReports.length !== 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -1930,9 +1531,7 @@ const ManagerDashboard = () => {
         {filteredReports.length === 0 ? (
           <div className="flex min-h-[300px] items-center justify-center px-4">
             <Empty
-              image={
-                Empty.PRESENTED_IMAGE_SIMPLE
-              }
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
                 weekFilter !== "all"
                   ? `No reports submitted for Week ${weekFilter}`
@@ -1952,18 +1551,12 @@ const ManagerDashboard = () => {
               pageSize: PAGE_SIZE,
               total: filteredReports.length,
               showSizeChanger: false,
-              showTotal: (
-                total,
-                range,
-              ) =>
+              showTotal: (total, range) =>
                 `Showing ${range[0]}–${range[1]} of ${total}`,
-              onChange: (page) =>
-                setCurrentPage(page),
+              onChange: (page) => setCurrentPage(page),
             }}
             scroll={{ x: 1300 }}
-            rowClassName={() =>
-              "hover:bg-slate-50"
-            }
+            rowClassName={() => "hover:bg-slate-50"}
           />
         )}
       </Card>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Plus, Search, FolderOpen, ChevronDown, X } from "lucide-react";
 import {
   Card,
@@ -21,9 +21,10 @@ import AvatarGroup from "../components/Avatar";
 import StatusBadge from "../components/StatusBadge";
 import { useMembers } from "../context/MembersContext.jsx";
 import {
-  getAllProjectsService,
+  getUserProjectsService,
   updateProjectStatusService,
 } from "../services/ProjectService";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -39,7 +40,8 @@ export default function ProjectsDashboard() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
   const { members , fetchAllUsers } = useMembers();
-  
+  const {user} = useContext(AuthContext);
+  console.log("ProjectsDashboard user:", user);
   useEffect(() => {
     handViewAllProjects();
   }, []);
@@ -48,13 +50,15 @@ export default function ProjectsDashboard() {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await getAllProjectsService();
+      const userId = user?._id ;
+      const response = await getUserProjectsService(userId);
+      console.log("getUserProjectsService response:", response);
 
       if (!response.success) {
         throw new Error(response.message || "Failed to fetch projects");
       }
-      setProjects(response.projects || []);
+      console.log("Fetched projects:", response.data.createdProjects);
+      setProjects(response.data.createdProjects || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch projects");
     } finally {

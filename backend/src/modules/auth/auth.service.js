@@ -168,8 +168,6 @@ const resetPassword = async (data) => {
 const getAuthUser = async (userID) => {
   const user = await userModel.findById(userID);
 
-  console.log("Retrieved user:", user);
-
   if (!user) {
     throw new AppError("User not found", 404);
   }
@@ -189,6 +187,7 @@ const getAuthUser = async (userID) => {
     role: user.role,
     profileColor: user.profileColor,
     isActive: user.isActive,
+    id : user._id,
   };
 };
 

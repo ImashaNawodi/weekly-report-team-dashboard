@@ -1,7 +1,12 @@
 const projectService = require("./project.service");
 const createProjectController = async (req, res, next) => {
   try {
-    const result = await projectService.createProject(req.body);
+    const loggedUser = req.user.id;
+   console.log("Logged user ID:", loggedUser);
+    const result = await projectService.createProject(
+      req.body,
+      loggedUser
+    );
 
     res.status(201).json({
       success: true,
@@ -61,6 +66,7 @@ const updateProjectStatusController = async (req, res, next) => {
 const getUserProjectsController = async (req, res, next) => {
   try {
     const result = await projectService.getUserProjects(req.user.id);
+    console.log("getUserProjectsController result:", result);
 
     res.status(200).json({
       success: true,
