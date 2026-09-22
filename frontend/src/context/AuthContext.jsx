@@ -11,7 +11,7 @@ export function AuthContextProvider({ children }) {
   const getAuthUser = async () => {
     try {
       const response = await authMeService();
-
+console.log("authMeService response:", response);
       if (response.success) {
         setUser(response.data.user);
       } else {

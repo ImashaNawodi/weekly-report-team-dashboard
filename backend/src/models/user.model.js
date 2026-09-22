@@ -3,9 +3,9 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const userSchema = new mongoose.Schema(
   {
-    userID:{
-        type: Number,
-        unique: true,
+    userID: {
+      type: Number,
+      unique: true,
     },
     firstName: {
       type: String,
@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema(
       enum: ["TEAM_MEMBER", "MANAGER", "ADMIN"],
       set: (value) => value.toUpperCase(),
       default: "TEAM_MEMBER",
+    },
+    profileColor: {
+      type: String,
+      default: "#2563EB",
     },
     isActive: {
       type: Boolean,

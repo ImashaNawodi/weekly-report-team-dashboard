@@ -37,7 +37,7 @@ const createProject = async (data) => {
 const getAllProjects = async () => {
   const projects = await projectModel
     .find()
-    .populate("teamMembers", "firstName lastName email role isActive")
+    .populate("teamMembers", "firstName lastName email role profileColor isActive")
     .sort({ createdAt: -1 });
 
     return projects.map((project) => ({

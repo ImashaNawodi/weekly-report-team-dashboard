@@ -7,7 +7,6 @@ import {
   Select,
   Button,
   Typography,
-  Avatar,
   Row,
   Col,
   message,
@@ -16,7 +15,7 @@ import {
   createProjectService,
   updateProjectService,
 } from "../services/ProjectService";
-import getInitials from "../helpers/ProfileName";
+import AvatarGroup from "./Avatar";
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -47,8 +46,6 @@ export default function ProjectModal({
           return memberId;
         })
         .filter(Boolean);
-
-      
 
       form.setFieldsValue({
         name: editingProject.name || "",
@@ -241,7 +238,6 @@ export default function ProjectModal({
             mode="multiple"
             placeholder="Select team members"
             size="large"
-            optionFilterProp="label"
             options={members.map((member) => ({
               value: member._id,
               label: `${member.firstName ?? ""} ${
@@ -278,17 +274,7 @@ export default function ProjectModal({
                   {selectedTeamMembers.map((member) => (
                     <Col xs={24} sm={12} key={member._id}>
                       <div className="flex items-center gap-2.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5">
-                        <Avatar
-                          size={32}
-                          style={{
-                            backgroundColor: member.avatar_color || "#64748b",
-                            color: "#fff",
-                            fontSize: 11,
-                            fontWeight: 600,
-                          }}
-                        >
-                          {getInitials(member.firstName, member.lastName)}
-                        </Avatar>
+                        <AvatarGroup members={member} />
 
                         <div className="min-w-0 flex-1">
                           <Text

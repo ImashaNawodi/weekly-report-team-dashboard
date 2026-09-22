@@ -2,18 +2,16 @@ import { useContext } from "react";
 import { Bell } from "lucide-react";
 import { Layout, Button, Avatar, Badge, Typography } from "antd";
 import { AuthContext } from "../context/AuthContext";
+import AvatarGroup from "./Avatar";
 
 const { Header: AntHeader } = Layout;
 const { Text } = Typography;
 
 export default function Header({ title, subtitle }) {
   const { user, authLoading } = useContext(AuthContext);
-
+  console.log("user", user);
   const fullName = user ? `${user.firstName} ${user.lastName}` : "User";
 
-  const initials = user
-    ? `${user.firstName?.charAt(0) || ""}${user.lastName?.charAt(0) || ""}`
-    : "U";
 
   return (
     <AntHeader
@@ -91,24 +89,7 @@ sm:!text-xl
         sm:!px-2
       "
         >
-          <Avatar
-            size={32}
-            className="
-          !flex
-          !shrink-0
-          !items-center
-          !justify-center
-          !bg-gradient-to-br
-          !from-blue-500
-          !to-blue-700
-          !text-xs
-          !font-bold
-          !text-white
-        "
-          >
-            {authLoading ? "..." : initials}
-          </Avatar>
-
+          <AvatarGroup members={user} />
           <div className="hidden text-left sm:block">
             <div className="text-sm font-semibold leading-tight text-slate-800">
               {authLoading ? "Loading..." : fullName}

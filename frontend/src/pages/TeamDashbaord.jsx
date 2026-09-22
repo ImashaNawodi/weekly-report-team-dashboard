@@ -1,4 +1,4 @@
-import { useState, useEffect} from "react";
+import { useState, useEffect } from "react";
 
 import {
   SearchOutlined,
@@ -38,6 +38,7 @@ import TeamMemberDetailDrawer from "../components/TeamMemberDetailDrawer";
 import { getAllProjectsService } from "../services/ProjectService";
 import TeamMemberRow from "../components/TeamMemebrRow";
 import StatusBadge from "../components/StatusBadge";
+import AvatarGroup from "../components/Avatar";
 
 const PAGE_SIZE = 8;
 
@@ -57,8 +58,6 @@ export default function TeamDashboard() {
   const [editingMember, setEditingMember] = useState(null);
 
   useEffect(() => {
-    
-
     fetchAllUsers();
     handleViewAllProjects();
   }, []);
@@ -263,32 +262,13 @@ export default function TeamDashboard() {
       key: "employee",
       width: 240,
       render: (_, member) => {
-        const firstName = member.firstName || "";
-        const lastName = member.lastName || "";
-
-        const displayName =
-          member.name || `${firstName} ${lastName}`.trim() || "Unknown Member";
-
-        const initials = getInitials(firstName, lastName);
-
         return (
           <div className="flex items-center gap-3">
-            <Avatar
-              size={36}
-              style={{
-                backgroundColor: member.avatar_color || "#64748b",
-                color: "#fff",
-                fontSize: 12,
-                fontWeight: 600,
-                flexShrink: 0,
-              }}
-            >
-              {initials}
-            </Avatar>
+            <AvatarGroup members={member} />
 
             <div className="min-w-0">
               <p className="m-0 max-w-[180px] truncate text-sm font-semibold text-slate-800">
-                {displayName}
+                {`${member.firstName} ${member.lastName}`.trim()}
               </p>
 
               <p className="m-0 mt-0.5 max-w-[180px] truncate text-xs text-slate-400">

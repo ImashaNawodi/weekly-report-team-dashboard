@@ -18,6 +18,7 @@ import {
 } from "antd";
 import { AuthContext } from "../context/AuthContext";
 import { updateUserProfileService } from "../services/TeamService";
+import AvatarGroup from "../components/Avatar";
 
 export default function SettingsPage() {
   const { user, setUser, authLoading } = useContext(AuthContext);
@@ -128,15 +129,7 @@ export default function SettingsPage() {
                   : "border-blue-100 bg-blue-50"
               }`}
             >
-              <div
-                className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                  user.role === "MANAGER"
-                    ? "bg-violet-100 text-violet-600"
-                    : "bg-blue-100 text-blue-600"
-                }`}
-              >
-                <UserOutlined className="text-sm" />
-              </div>
+              <AvatarGroup members={user} />
 
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">

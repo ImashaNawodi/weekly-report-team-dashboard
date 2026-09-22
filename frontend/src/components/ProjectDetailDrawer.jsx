@@ -3,6 +3,7 @@ import { Drawer, Button, Typography, Space } from "antd";
 import StatusBadge from "./StatusBadge";
 import getInitials from "../helpers/ProfileName";
 import colors from "../helpers/BackgroundColor";
+import AvatarGroup from "./Avatar";
 
 const { Text, Paragraph } = Typography;
 
@@ -81,13 +82,7 @@ export default function ProjectDetailDrawer({ project, open, onClose }) {
                   key={member._id}
                   className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5"
                 >
-                  <div
-                    className={`flex h-8 w-8 min-w-8 items-center justify-center rounded-full ${
-                      colors[index % colors.length]
-                    } text-[11px] font-semibold text-white`}
-                  >
-                    {getInitials(member.firstName, member.lastName)}
-                  </div>
+                  <AvatarGroup members={member} />
 
                   <div>
                     <Text className="!block !text-sm !font-medium !text-slate-800">

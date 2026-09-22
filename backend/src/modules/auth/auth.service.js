@@ -11,6 +11,7 @@ const {
 } = require("../../utils/token.utils");
 
 const AppError = require("../../utils/appError.utils");
+const { assignProfileColor } = require("../../utils/profileColor.util");
 
 const registerUser = async (data) => {
   const { firstName, lastName, email, password } = data;
@@ -23,6 +24,7 @@ const registerUser = async (data) => {
 
   const salt = Number(process.env.SALT);
   const hashedPassword = await bcrypt.hash(password, salt);
+  const profileColor = await assignProfileColor();
 
   const user = new userModel({
     firstName,
@@ -30,6 +32,7 @@ const registerUser = async (data) => {
     email,
     password: hashedPassword,
     role: "TEAM_MEMBER",
+    profileColor,
   });
 
   await user.save();
@@ -43,6 +46,7 @@ const registerUser = async (data) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      profileColor: user.profileColor,
     },
     token,
   };
@@ -79,6 +83,7 @@ const loginUser = async (data) => {
       lastName: user.lastName,
       email: user.email,
       role: user.role,
+      profileColor: user.profileColor,
     },
     token,
   };
@@ -182,6 +187,7 @@ const getAuthUser = async (userID) => {
     lastName: user.lastName,
     email: user.email,
     role: user.role,
+    profileColor: user.profileColor,
   };
 };
 
