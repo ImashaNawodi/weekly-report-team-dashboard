@@ -13,6 +13,7 @@ import HealthAndSupport from "../pages/HealthAndSupportPage";
 import CheckUser from "../pages/CheckUser";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 import WeeklyReport from "../pages/WeeklyReport";
+import DashboardRedirect from "./DashboardRedirect";
 
 const AppRoutes = () => {
   return (
@@ -24,6 +25,7 @@ const AppRoutes = () => {
       <Route path="/check-user" element={<CheckUser />} />
       <Route path="/forget-pw" element={<ResetPasswordPage />} />
 
+      <Route path="/manager-home" element={<DashboardRedirect />} />
       <Route path="/manager-home" element={<ManagerHome />}>
         <Route path="settings" element={<SettingsPage />} />
 

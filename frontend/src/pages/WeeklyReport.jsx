@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useContext } from "react";
 import { message, Button, Card, Spin } from "antd";
 import { FolderOutlined, WarningOutlined } from "@ant-design/icons";
 
@@ -23,6 +23,7 @@ import {
 
 import { getUserProjectsService } from "../services/ProjectService";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const getWeekStart = (date = new Date()) => {
   const result = new Date(date);
@@ -145,6 +146,8 @@ const getDisplayStatus = (status) => {
 };
 
 const WeeklyReport = () => {
+  const {handleLogout} =useContext(AuthContext)
+
   const isEditMode =
     sessionStorage.getItem("editingReport") === "true";
 
@@ -719,7 +722,7 @@ const WeeklyReport = () => {
             </div>
 
             <h1 className="text-2xl font-bold text-gray-900">
-              Unable to Load Project
+              Unable to Create Report
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-gray-500">
@@ -729,12 +732,10 @@ const WeeklyReport = () => {
             <Button
               type="primary"
               size="large"
-              onClick={() =>
-                window.location.reload()
-              }
               className="mt-6 h-11 rounded-lg px-6"
+              onClick={handleLogout}
             >
-              Try Again
+              Please contact your manager to resolve this issue.
             </Button>
           </div>
         </Card>
@@ -779,7 +780,6 @@ const WeeklyReport = () => {
       </div>
     );
   }
-
   return (
     <div className="w-full space-y-6 p-6">
       <ProjectSection

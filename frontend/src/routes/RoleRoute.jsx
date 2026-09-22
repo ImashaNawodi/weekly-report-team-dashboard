@@ -11,7 +11,7 @@ const RoleRoute = ({ allowedRoles }) => {
     return null;
   }
 
-  if (!user) {
+  if (!user || user.isActive === false) {
     return <Navigate to="/login" replace />;
   }
 

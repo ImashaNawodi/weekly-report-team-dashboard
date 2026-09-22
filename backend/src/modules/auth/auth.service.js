@@ -188,6 +188,7 @@ const getAuthUser = async (userID) => {
     email: user.email,
     role: user.role,
     profileColor: user.profileColor,
+    isActive: user.isActive,
   };
 };
 

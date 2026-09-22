@@ -12,7 +12,6 @@ export default function Header({ title, subtitle }) {
   console.log("user", user);
   const fullName = user ? `${user.firstName} ${user.lastName}` : "User";
 
-
   return (
     <AntHeader
       className="
@@ -89,7 +88,7 @@ sm:!text-xl
         sm:!px-2
       "
         >
-          <AvatarGroup members={user} />
+          {user && <AvatarGroup members={user} />}
           <div className="hidden text-left sm:block">
             <div className="text-sm font-semibold leading-tight text-slate-800">
               {authLoading ? "Loading..." : fullName}
